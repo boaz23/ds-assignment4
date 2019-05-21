@@ -1,10 +1,12 @@
 public class BloomFilter {
+	private int m1;
 	private BitArray bitArray;
 	private LinkedList<HashFunction> hashFunctions;
 	
 	public BloomFilter(String m1, String hashFunctionsFilePath) {
 		// parse the string to an integer
 		int i32M1 = Integer.parseInt(m1);
+		this.m1 = i32M1;
 		
 		// initialize the bit array
 		this.bitArray = new BitArray(i32M1);

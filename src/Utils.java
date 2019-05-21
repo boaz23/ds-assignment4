@@ -21,7 +21,7 @@ public class Utils {
      * @param bytes
      * @return
      */
-    public static int hashBytes(byte[] bytes) {s
+    public static int hashBytes(byte[] bytes) {
     	if (bytes == null) {
     		throw new RuntimeException("bytes is null.");
     	}

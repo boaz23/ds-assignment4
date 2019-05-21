@@ -73,7 +73,7 @@ public class BloomFilter {
 	
 	public void insert(String password) {
 		// convert the password to an integer using horner's rule
-		int key = Utils.hashPassword(password);
+		int key = Utils.hornerPassword(password);
 		for (HashFunction hashFunction : this.hashFunctions) {
 			int index = hashFunction.hash(key);
 			this.bitArray.set(index, true);

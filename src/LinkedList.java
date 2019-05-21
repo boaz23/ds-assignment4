@@ -30,6 +30,6 @@ public class LinkedList<E> implements Iterable<E> {
     }
 
     public Iterator<E> iterator() {
-        return new LinkedListIterator<>(head);
+        return new LinkedListIterator<>(this.head);
     }
 }

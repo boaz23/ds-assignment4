@@ -8,12 +8,12 @@ public class Utils {
      * @param password The password
      * @return
      */
-    public static int hashPassword(String password) {
+    public static int hornerPassword(String password) {
     	if (password == null) {
     		throw new RuntimeException("password is null.");
     	}
     	
-    	return hashBytes(password.getBytes());
+    	return hornerPassword(password.getBytes());
     }
     
     /**
@@ -21,23 +21,23 @@ public class Utils {
      * @param bytes
      * @return
      */
-    public static int hashBytes(byte[] bytes) {
+    public static int hornerPassword(byte[] bytes) {
     	if (bytes == null) {
     		throw new RuntimeException("bytes is null.");
     	}
     	
-    	long hash;
+    	long horner;
     	if (bytes.length == 0) {
-    		hash = 0;
+    		horner = 0;
     	}
     	else {
-    		hash = bytes[0];
+    		horner = bytes[0];
     		for (int i = 1; i < bytes.length; i++) {
     			// (A * B) mod C = ((A mod C) * (B mod C)) mod C
-    			hash = bytes[i] + (((hash % p) * (BYTE_BASE % p)) % p);
+    			horner = bytes[i] + (((horner % p) * (BYTE_BASE % p)) % p);
     		}
     	}
     	
-    	return (int)hash;
+    	return (int)horner;
     }
 }

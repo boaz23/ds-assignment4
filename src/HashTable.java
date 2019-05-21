@@ -33,7 +33,7 @@ public class HashTable {
 	
 	public void insert(String password) {
 		// convert the password to an integer using horner's rule
-		int key = Utils.hashPassword(password);
+		int key = Utils.hornerPassword(password);
 		int hash = this.hashFunction(key);
 		
 		HashList list;
@@ -53,6 +53,7 @@ public class HashTable {
 	
 	public int hashFunction(int key) {
 		// use mod only on the positive part of key
+		// because we want a positive index
 		return (key & 0x7fffffff) % this.m2;
 	}
 }

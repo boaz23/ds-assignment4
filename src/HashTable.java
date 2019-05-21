@@ -9,6 +9,10 @@ public class HashTable {
 	}
 	
 	public void updateTable(String badPasswordsFilePath) {
+    	if (badPasswordsFilePath == null || badPasswordsFilePath.equals("")) {
+    		throw new RuntimeException("badPasswordsFilePath is null or empty.");
+    	}
+    	
 		// Iterate the lines of the file and parse each line
 		FileLinesIterator linesIterator = null;
 		try {
@@ -48,6 +52,7 @@ public class HashTable {
 	}
 	
 	public int hashFunction(int key) {
+		// use mod only on the positive part of key
 		return (key & 0x7fffffff) % this.m2;
 	}
 }

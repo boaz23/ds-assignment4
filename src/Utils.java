@@ -9,6 +9,10 @@ public class Utils {
      * @return
      */
     public static int hashPassword(String password) {
+    	if (password == null) {
+    		throw new RuntimeException("password is null.");
+    	}
+    	
     	return hashBytes(password.getBytes());
     }
     
@@ -17,7 +21,11 @@ public class Utils {
      * @param bytes
      * @return
      */
-    public static int hashBytes(byte[] bytes) {
+    public static int hashBytes(byte[] bytes) {s
+    	if (bytes == null) {
+    		throw new RuntimeException("bytes is null.");
+    	}
+    	
     	long hash;
     	if (bytes.length == 0) {
     		hash = 0;
@@ -25,6 +33,7 @@ public class Utils {
     	else {
     		hash = bytes[0];
     		for (int i = 1; i < bytes.length; i++) {
+    			// (A * B) mod C = ((A mod C) * (B mod C)) mod C
     			hash = bytes[i] + (((hash % p) * (BYTE_BASE % p)) % p);
     		}
     	}

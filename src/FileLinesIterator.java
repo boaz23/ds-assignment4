@@ -14,11 +14,15 @@ public class FileLinesIterator implements Iterator<String>, Closeable {
     private String nextLine;
 
     public FileLinesIterator(String filePath) {
+    	if (filePath == null || filePath.equals("")) {
+    		throw new RuntimeException("filePath is null or empty.");
+    	}
+    	
         try {
             this.fileReader = new FileReader(filePath);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            throw new RuntimeException("io exception", e);
+        }
+        catch (FileNotFoundException e) {
+            throw new RuntimeException("file not found", e);
         }
         this.bufferedReader = new BufferedReader(this.fileReader);
     }
@@ -29,16 +33,16 @@ public class FileLinesIterator implements Iterator<String>, Closeable {
      */
     @Override
     public boolean hasNext() {
-        if (nextLine != null) {
+        if (this.nextLine != null) {
             return true;
         }
         else {
             try {
-                nextLine = this.bufferedReader.readLine();
-                return (nextLine != null);
+                this.nextLine = this.bufferedReader.readLine();
+                return (this.nextLine != null);
             }
             catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new RuntimeException("IO exception: " + e.getMessage(), e);
             }
         }
     }
@@ -48,9 +52,9 @@ public class FileLinesIterator implements Iterator<String>, Closeable {
      */
     @Override
     public String next() {
-        if (nextLine != null || this.hasNext()) {
-            String line = nextLine;
-            nextLine = null;
+        if (this.nextLine != null || this.hasNext()) {
+            String line = this.nextLine;
+            this.nextLine = null;
             return line;
         }
         else {
@@ -69,7 +73,7 @@ public class FileLinesIterator implements Iterator<String>, Closeable {
 	    	}
     	}
     	catch (IOException e) {
-    		throw new RuntimeException(e);
+    		throw new RuntimeException("IO exception: " + e.getMessage(), e);
     	}
     }
 }

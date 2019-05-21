@@ -15,7 +15,7 @@ public class BitArray {
 
     public BitArray(int length) {
         if (length < 0) {
-            throw new IllegalArgumentException("The length must be a non-negative number.");
+            throw new RuntimeException("The length must be a non-negative number.");
         }
 
         // calculate the required amount of bytes needed
@@ -55,7 +55,7 @@ public class BitArray {
 
     private void validateIndex(int index) {
         if (index < 0 | index >= this.length()) {
-            throw new IllegalArgumentException("index out of range.");
+            throw new RuntimeException("index out of range.");
         }
     }
 
@@ -97,11 +97,6 @@ public class BitArray {
      */
     private String getString(byte item) {
         String s = "";
-//        int i32Byte = item < 0 ? (0xff + item + 1) : item;
-//        for (int i = 0; i < BITS_PER_ITEM; i++) {
-//            s = (i32Byte % 2) + s;
-//            i32Byte /= 2;
-//        }
 
         // start from the last bit of the byte
         byte bitFilter = (byte)(1 << (BITS_PER_ITEM - 1));

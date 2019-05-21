@@ -14,6 +14,7 @@ public class HashFunctionImpl implements HashFunction {
 	}
 	
 	public int hash(int k) {
+		// ((a*k + b) % p) % m1
 		return (((this.alpha * k) + this.beta) % Utils.p) % m1; 
 	}
 }

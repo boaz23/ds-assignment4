@@ -1,9 +1,7 @@
 public class Link<E> {
-    // ---------------------- fields ----------------------
     private E data;
     private Link<E> next;
 
-    // ---------------------- constructors ----------------------
     public Link(E data, Link<E> next) {
         this.data = data;
         this.next = next;
@@ -13,9 +11,8 @@ public class Link<E> {
         this(data, null);
     }
 
-    // ---------------------- Methods ----------------------
     public Link<E> getNext() {
-        return next;
+        return this.next;
     }
 
     public void setNext(Link<E> next) {
@@ -23,16 +20,20 @@ public class Link<E> {
     }
 
     public E getData() {
-        return data;
+        return this.data;
     }
 
     public E setData(E data) {
+    	if (data == null) {
+            throw new RuntimeException("data is null.");
+        }
+    	
         E tmp = this.data;
         this.data = data;
         return tmp;
     }
 
     public String toString() {
-        return data.toString();
+        return this.data.toString();
     }
 }

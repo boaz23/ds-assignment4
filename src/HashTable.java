@@ -48,7 +48,7 @@ public class HashTable {
 		}
 		
 		// add a new element to the list
-		list.add(new HashListElement(key, password));
+		list.addLast(new HashListElement(key, password));
 	}
 	
 	public int hashFunction(int key) {

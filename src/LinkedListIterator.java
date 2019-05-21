@@ -1,27 +1,24 @@
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-public class LinkedListIterator<T> implements Iterator<T> {
-    private Link<T> current;
+public class LinkedListIterator<E> implements Iterator<E> {
+    private Link<E> current;
 
-    public LinkedListIterator(Link<T> start) {
-        current = start;
+    public LinkedListIterator(Link<E> start) {
+        this.current = start;
     }
 
     public boolean hasNext() {
-        return current != null;
+        return this.current != null;
     }
 
-    public T next() {
-        if (!hasNext())
+    public E next() {
+        if (!this.hasNext()) {
             throw new NoSuchElementException();
-        T data = current.getData();
-        current = current.getNext();
+        }
+        
+        E data = this.current.getData();
+        this.current = this.current.getNext();
         return data;
-    }
-
-    //DO NOT REMOVE OR CHANGE THIS MEHTOD – IT IS REQUIRED
-    public void remove() {
-        return;
     }
 }

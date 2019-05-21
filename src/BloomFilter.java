@@ -45,7 +45,7 @@ public class BloomFilter {
 		String sBeta = hashFunctionParams[1];
 		
 		// add a new hash function to the list with the given alpha, beta and m1
-		this.hashFunctions.add(new HashFunctionImpl(Integer.parseInt(sAlpha), Integer.parseInt(sBeta), i32M1));
+		this.hashFunctions.addLast(new HashFunctionImpl(Integer.parseInt(sAlpha), Integer.parseInt(sBeta), i32M1));
 	}
 	
 	public void updateTable(String badPasswordsFilePath) {

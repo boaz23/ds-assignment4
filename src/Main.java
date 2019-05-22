@@ -1,7 +1,5 @@
 public class Main {
     public static void main(String[] args) {
-    	BloomFilter a = contructBloomFilter("200");
-    	Object b = a.toString();
     }
     
     private static BloomFilter contructBloomFilter(String m1) {

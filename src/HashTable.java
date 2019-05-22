@@ -3,32 +3,16 @@ public class HashTable {
 	private HashList[] table;
 	
 	public HashTable(String m2) {
-		int i32M2 = Integer.parseInt(m2);
-		this.table = new HashList[i32M2];
-		this.m2 = i32M2;
+		this.m2 = Integer.parseInt(m2);
+		this.table = new HashList[this.m2];
 	}
 	
 	public void updateTable(String badPasswordsFilePath) {
     	if (badPasswordsFilePath == null || badPasswordsFilePath.equals("")) {
     		throw new RuntimeException("badPasswordsFilePath is null or empty.");
     	}
-    	
-		// Iterate the lines of the file and parse each line
-		FileLinesIterator linesIterator = null;
-		try {
-			linesIterator = new FileLinesIterator(badPasswordsFilePath);
-			while (linesIterator.hasNext()) {
-				String line = linesIterator.next();
-				
-				// insert the password to the bloom filter
-				this.insert(line);
-			}
-		}
-		finally {
-			if (linesIterator != null) {
-				linesIterator.close();
-			}
-		}
+
+		Utils.iterateFileLines(badPasswordsFilePath, password -> this.insert(password));
 	}
 	
 	public void insert(String password) {

@@ -105,7 +105,7 @@ public class BitArray {
 
             // Java byte's conversion to int keeps the value.
             // that means instead of padding it with 0's,
-            // it padds it with 1's.
+            // it padds it with 1's if the byte's value is negative.
             // That means that 9th bit in the resulting int will be 1
             // and therefore after shifting by 1 (whether signed or unsigned),
             // the 8th bit will be 1. We want the exact opposite, we want the 8th

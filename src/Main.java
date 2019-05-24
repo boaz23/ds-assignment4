@@ -13,6 +13,9 @@ public class Main {
 		//Find the number of rejected passwords
 		//Find the number of rejected passwords
 
+		BTree btree = createTree("2");
+		System.out.println(btree.toString());
+
 	}
     
     private static BloomFilter contructBloomFilter(String m1) {
@@ -29,6 +32,13 @@ public class Main {
 		hashTable.updateTable(System.getProperty("user.dir")+"/bad_passwords.txt");
 		return hashTable;
 	}
+
+	private static BTree createTree(String tVal) {
+		BTree btree = new BTree(tVal);
+		btree.createFullTree(System.getProperty("user.dir")+"/bad_passwords.txt");
+		return btree;
+	}
+
 
 
 

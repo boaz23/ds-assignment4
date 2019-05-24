@@ -19,10 +19,9 @@ public class BTreeNode {
         this(t,false);
     }
 
+
     protected int minKeys() { return root? 1:t-1;}
     protected int maxKeys() { return 2*t-1;}
-
-    public void insert() {}
 
     public NodeIndexPair search(String password) {
         int i=0;
@@ -37,10 +36,21 @@ public class BTreeNode {
             return children[i].search(password);
     }
 
-    public void insert(String password) {
-
-
-
+    BTreeNode insert(String password) {
+        if (n == maxKeys()) {
+            BTreeNode s = new BTreeNode(t,root);
+            root = false;
+            s.leaf = false;
+            s.n = 0;
+            s.children[0] = this;
+            s.splitChild(0);
+            s.insertNonfull(password);
+            return s;
+        }
+        else {
+            insertNonfull(password);
+            return this;
+        }
     }
 
     protected void splitChild(int i) {
@@ -54,12 +64,12 @@ public class BTreeNode {
                 z.children[j] = y.children[j+t];
         } //if
 
-        for (int j = n; n > i; j--)
+        for (int j = n; j > i; j--)
             children[j+1] = children[j];
 
         children[i+1] = z;
 
-        for (int j = n-1; n >= i; j--)
+        for (int j = n-1; j >= i; j--)
             passwords[j+1] = passwords[j];
 
         passwords[i] = y.passwords[t-1];
@@ -114,6 +124,28 @@ public class BTreeNode {
     protected int compare(String password1 , String password2) {
         return password1.toLowerCase().compareTo(password2.toLowerCase());
     }
+
+    public String toString(int depth) {
+        String inorder = "";
+
+        if (!leaf) {
+            for (int i = 0; i < n; i++) {
+                inorder += children[i].toString(depth + 1);
+                inorder += "," + passwords[i] + "_" + depth;
+            } // for
+            inorder +=  "," + children[n].toString(depth+1);
+        } // if leaf
+
+        else {
+            inorder += passwords[0] + "_"  + depth;
+            for (int i = 1; i < n; i++) {
+                inorder += "," + passwords[i] + "_" + depth;
+            } // for
+        } // not leaf
+        return super.toString();
+    }
+
+    public boolean isEmty() {return n==0;}
 }
 
 

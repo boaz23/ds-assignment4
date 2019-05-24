@@ -12,33 +12,40 @@ public class BTreeNode {
         this.root = root;
         passwords = new String[2*t - 1];
         children = new BTreeNode[2*t];
-        n=0;
+        n = 0;
     }
 
     BTreeNode(int t) {
         this(t,false);
     }
 
-
-    protected int minKeys() { return root? 1:t-1;}
+    protected int minKeys() { return root ? 1 : t-1;}
     protected int maxKeys() { return 2*t-1;}
 
     public NodeIndexPair search(String password) {
-        int i=0;
-        int compareResult;
-        while (i < n & (compareResult = compare(password, passwords[i])) > 0)
+        int i = 0;
+        int compareResult = 0;
+
+        // find the first index such that the key is smaller than the key in that index
+        while (i < n && (compareResult = compare(password, passwords[i])) > 0)
             i++;
+
+        // if we're still in bounds of this node the last compare
+        // result is 0, then we found it
         if (i < n & compareResult == 0)
             return new NodeIndexPair(this,i);
+        // we haven't found, nowhere else to look for the key
         else if (this.leaf)
             return null;
+        // recursively look for the key
         else
             return children[i].search(password);
     }
 
     BTreeNode insert(String password) {
+        // if this node is full, need to split
         if (n == maxKeys()) {
-            BTreeNode s = new BTreeNode(t,root);
+            BTreeNode s = new BTreeNode(t, root);
             root = false;
             s.leaf = false;
             s.n = 0;
@@ -47,6 +54,7 @@ public class BTreeNode {
             s.insertNonfull(password);
             return s;
         }
+        // find the right leaf and insert there
         else {
             insertNonfull(password);
             return this;
@@ -89,7 +97,7 @@ public class BTreeNode {
     private void insertNonfull(String password) {
         int i = n-1;
         if (leaf) {
-            for (;i >= 0 && compare(password,passwords[i]) < 0; i--) {
+            for (; i >= 0 && compare(password,passwords[i]) < 0; i--) {
                 passwords[i+1] = passwords[i];
             } //while , we doing shift to the right
             passwords[i+1] = password;
@@ -144,7 +152,9 @@ public class BTreeNode {
         return inorder;
     }
 
-    public boolean isEmpty() {return n==0;}
+    public boolean isEmpty() {
+        return n == 0;
+    }
 }
 
 

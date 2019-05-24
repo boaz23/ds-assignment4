@@ -1,9 +1,11 @@
 import java.io.*;
+import java.text.DecimalFormat;
 import java.util.function.Consumer;
 
 public class Utils {
     public static final int p = 15486907;
     public static final int BYTE_BASE = 256;
+    public static final long NANO_SEC_TO_MS = 1000000;
 
     /**
      * Hash the given string to a integer using horner's rule
@@ -78,5 +80,12 @@ public class Utils {
 				throw new RuntimeException("io exception", e);
 			}
 		}
+	}
+
+	public static String formatMillisecondsDiff(long startNanoTime, long endNanoTime) {
+    	long diff = endNanoTime - startNanoTime;
+    	double milliseconds = (double)diff / NANO_SEC_TO_MS;
+		DecimalFormat format = new DecimalFormat("#.####");
+		return format.format(milliseconds);
 	}
 }

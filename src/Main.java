@@ -13,9 +13,11 @@ public class Main {
 		//Find the number of rejected passwords
 		//Find the number of rejected passwords
 
+		long a = System.nanoTime();
 		BTree btree = createTree("2");
 		System.out.println(btree.toString());
-
+		long b = System.nanoTime();
+		long c = b - a;
 	}
     
     private static BloomFilter contructBloomFilter(String m1) {

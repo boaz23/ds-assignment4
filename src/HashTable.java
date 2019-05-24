@@ -17,6 +17,11 @@ public class HashTable {
 		Utils.iterateFileLines(filePath, password -> this.insert(password));
 	}
 
+	public boolean contains(String password) {
+		int key = Utils.hornerPassword(password);
+		return this.contains(key);
+	}
+
 	public boolean contains(int key) {
 		int hash = this.hashFunction(key);
 		HashList list = this.table[hash];
@@ -43,9 +48,16 @@ public class HashTable {
 		list.addLast(key);
 	}
 	
-	public int hashFunction(int key) {
+	private int hashFunction(int key) {
 		// use mod only on the positive part of key
 		// because we want a positive index
 		return (key & 0x7fffffff) % this.m2;
+	}
+
+	public String getSearchTime(String filePath) {
+		long startNanoTime = System.nanoTime();
+		Utils.iterateFileLines(filePath, password -> this.contains(password));
+		long endNanoTime = System.nanoTime();
+		return Utils.formatMillisecondsDiff(startNanoTime, endNanoTime);
 	}
 }

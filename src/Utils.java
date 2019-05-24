@@ -1,8 +1,4 @@
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.UncheckedIOException;
+import java.io.*;
 import java.util.function.Consumer;
 
 public class Utils {
@@ -27,7 +23,7 @@ public class Utils {
      * @param bytes The bytes array. We can think of the byte array as
      * P(x) = a_n*x^n+...+a_1*x+a_0 when x=256 and a_n = bytes[0], ..., a_1=bytes[bytes.length -1].
      * We then apply horner's rule for p.
-     * @return The 'polynomial' (represented by the byte array)  modulo p when x=256
+     * @return The 'polynomial' (represented by the byte array) modulo p when x=256
      */
     public static int hornerPassword(byte[] bytes) {
     	if (bytes == null) {

@@ -3,15 +3,18 @@ public class HashTable {
 	private final HashList[] table;
 	
 	public HashTable(String m2) {
-		this.m2 = Integer.parseInt(m2);
+		try {
+			this.m2 = Integer.parseInt(m2);
+		}
+		catch (NumberFormatException e) {
+			throw new RuntimeException("m2 is not a number.", e);
+		}
+
 		this.table = new HashList[this.m2];
 	}
 	
-	public void updateTable(String badPasswordsFilePath) {
-    	if (badPasswordsFilePath == null || badPasswordsFilePath.equals("")) {
-    		throw new RuntimeException("badPasswordsFilePath is null or empty.");
-    	}
-		Utils.iterateFileLines(badPasswordsFilePath, password -> this.insert(password));
+	public void updateTable(String filePath) {
+		Utils.iterateFileLines(filePath, password -> this.insert(password));
 	}
 
 	public boolean contains(int key) {

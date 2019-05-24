@@ -54,8 +54,9 @@ public class BTreeNode {
     }
 
     protected void splitChild(int i) {
-        BTreeNode y = this.children[i];
+        BTreeNode y = children[i];
         BTreeNode z = createNewSplitNode(y.leaf);
+
         for (int j = 0; j < t-1; j++)
             z.passwords[j] = y.passwords[j+t];
 
@@ -94,12 +95,11 @@ public class BTreeNode {
             passwords[i+1] = password;
             n++;
         } // if
-
         else {
             for (; i >= 0 && compare(password, passwords[i]) < 0; i--) {}
             i++;
             if (children[i].n == children[i].maxKeys()) {
-                children[i].splitChild(i);
+                splitChild(i);
                 if (compare(password,passwords[i]) > 0) {
                     i++;
                 }
@@ -114,38 +114,37 @@ public class BTreeNode {
 //
 //    } idea for improvmant
 
-
-
-
     // if password1 > password2 we return positive number
     // if password1 = password2 we return 0
-    // if password1 < password2 we return nagitive number
-
+    // if password1 < password2 we return negative number
     protected int compare(String password1 , String password2) {
-        return password1.toLowerCase().compareTo(password2.toLowerCase());
+        return password1.compareTo(password2);
     }
 
     public String toString(int depth) {
         String inorder = "";
 
-        if (!leaf) {
-            for (int i = 0; i < n; i++) {
-                inorder += children[i].toString(depth + 1);
-                inorder += "," + passwords[i] + "_" + depth;
-            } // for
-            inorder +=  "," + children[n].toString(depth+1);
-        } // if leaf
-
-        else {
+        if (leaf) {
             inorder += passwords[0] + "_"  + depth;
             for (int i = 1; i < n; i++) {
                 inorder += "," + passwords[i] + "_" + depth;
             } // for
-        } // not leaf
-        return super.toString();
+        }
+        // not leaf
+        else {
+            inorder += children[0].toString(depth + 1);
+            inorder += "," + passwords[0] + "_" + depth;
+            for (int i = 1; i < n; i++) {
+                inorder += "," + children[i].toString(depth + 1);
+                inorder += "," + passwords[i] + "_" + depth;
+            } // for
+            inorder +=  "," + children[n].toString(depth+1);
+        }
+
+        return inorder;
     }
 
-    public boolean isEmty() {return n==0;}
+    public boolean isEmpty() {return n==0;}
 }
 
 

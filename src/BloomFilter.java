@@ -1,11 +1,10 @@
-
 public class BloomFilter {
 	private int m1;
 	private BitArray bitArray;
 	private LinkedList<HashFunction> hashFunctions;
 	
-	public BloomFilter(String m1, String hashFunctionsFilePath) {
-    	if (hashFunctionsFilePath == null || hashFunctionsFilePath.equals("")) {
+	public BloomFilter(String m1, String filePath) {
+    	if (filePath == null || filePath.equals("")) {
     		throw new RuntimeException("hashFunctionsFilePath is null or empty.");
     	}
     	
@@ -20,7 +19,7 @@ public class BloomFilter {
 		// initialize the bit array
 		this.bitArray = new BitArray(this.m1);
 		this.hashFunctions = new LinkedList<>();
-		Utils.iterateFileLines(hashFunctionsFilePath, password -> this.parseHashFunctionLine(password));
+		Utils.iterateFileLines(filePath, password -> this.parseHashFunctionLine(password));
 	}
 
 	private void parseHashFunctionLine(String line) {
@@ -38,8 +37,8 @@ public class BloomFilter {
 		}
 	}
 	
-	public void updateTable(String badPasswordsFilePath) {
-		Utils.iterateFileLines(badPasswordsFilePath, password -> this.insert(password));
+	public void updateTable(String filePath) {
+		Utils.iterateFileLines(filePath, password -> this.insert(password));
 	}
 
 	/**
@@ -64,7 +63,6 @@ public class BloomFilter {
 		return this.contains(key);
 	}
 
-
 	/**
 	 * Returns whether the key (converted number of a password) is in our bad password bloom filter.
 	 * @param key The key
@@ -85,7 +83,7 @@ public class BloomFilter {
 		return contains;
 	}
 
-	public String getFalsePositivePercentage(HashTable hashtable, String filePath){
+	public String getFalsePositivePercentage(HashTable hashtable, String filePath) {
 		int falsePositive = 0;
 		int goodPasswords = 0;
 
@@ -114,7 +112,7 @@ public class BloomFilter {
 		return "" + percent;
 	}
 
-	public String getRejectedPasswordsAmount(String filePath){
+	public String getRejectedPasswordsAmount(String filePath) {
 		int badPasswords = 0;
 		try (FileLinesIterator linesIterator = new FileLinesIterator(filePath)) {
 			for (String password : linesIterator) {

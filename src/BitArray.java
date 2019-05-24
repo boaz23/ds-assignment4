@@ -123,17 +123,17 @@ public class BitArray {
         /**
          * The index of the byte in the 'bits' array
          */
-        private int itemIndex;
+        private final int itemIndex;
 
         /**
          * The index of the bit in the byte itself
          */
-        private int bitIndex;
+        private final int bitIndex;
 
         /**
          * The byte value used to single out the bit we care about in the byte
          */
-        private byte bitFilter;
+        private final byte bitFilter;
 
         private BitIndices(int index) {
             itemIndex = getItemIndex(index);

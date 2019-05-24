@@ -30,7 +30,7 @@ public class LinkedList<E> implements Iterable<E> {
     }
 
     protected Link<E> createLink(E data) {
-         return new Link<E>(data);
+        return new Link<>(data);
     }
 
     public boolean contains(E element) {

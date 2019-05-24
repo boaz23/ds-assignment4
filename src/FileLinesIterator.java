@@ -68,9 +68,9 @@ public class FileLinesIterator implements Iterator<String>, Iterable<String>, Cl
 	    		this.fileReader.close();
 	    	}
 	    	if (this.bufferedReader != null) {
-	    		this.bufferedReader.close();
+                this.bufferedReader.close();
 	    	}
-    	}
+        }
     	catch (IOException e) {
     		throw new RuntimeException("IO exception: " + e.getMessage(), e);
     	}

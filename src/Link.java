@@ -23,16 +23,6 @@ public class Link<E> {
         return this.data;
     }
 
-    public E setData(E data) {
-    	if (data == null) {
-            throw new RuntimeException("data is null.");
-        }
-    	
-        E tmp = this.data;
-        this.data = data;
-        return tmp;
-    }
-
     public String toString() {
         return this.data.toString();
     }

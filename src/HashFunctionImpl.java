@@ -3,9 +3,9 @@
  *
  */
 public class HashFunctionImpl implements HashFunction {
-	public int alpha;
-	public int beta;
-	public int m1;
+	public final int alpha;
+	public final int beta;
+	public final int m1;
 	
 	public HashFunctionImpl(int a, int b, int m1) {
 		this.alpha = a;

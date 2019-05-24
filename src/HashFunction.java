@@ -1,5 +1,5 @@
 /**
- * An interface that reprsents a hash function
+ * An interface that represents a hash function
  *
  */
 public interface HashFunction {

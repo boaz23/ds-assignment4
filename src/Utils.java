@@ -6,9 +6,9 @@ import java.io.UncheckedIOException;
 import java.util.function.Consumer;
 
 public class Utils {
-    public static int p = 15486907;
-    public static int BYTE_BASE = 256;
-    
+    public static final int p = 15486907;
+    public static final int BYTE_BASE = 256;
+
     /**
      * Hash the given string to a integer using horner's rule
      * on the bytes composing the string
@@ -19,10 +19,10 @@ public class Utils {
     	if (password == null) {
     		throw new RuntimeException("password is null.");
     	}
-    	
+
     	return hornerPassword(password.getBytes());
     }
-    
+
     /**
      * Horner's rule algorithm for calculating a polynomial value modulo p.
      * @param bytes The bytes array. We can think of the byte array as
@@ -34,7 +34,7 @@ public class Utils {
     	if (bytes == null) {
     		throw new RuntimeException("bytes is null.");
     	}
-    	
+
     	long horner;
     	if (bytes.length == 0) {
     		horner = 0;
@@ -46,10 +46,10 @@ public class Utils {
     			horner = bytes[i] + (((horner % p) * (BYTE_BASE % p)) % p);
     		}
     	}
-    	
+
     	return (int)horner;
     }
-    
+
     public static void iterateFileLines(String filePath, Consumer<String> action) {
     	if (filePath == null || filePath.equals("")) {
     		throw new RuntimeException("filePath is null or empty.");
@@ -57,7 +57,7 @@ public class Utils {
     	if (action == null) {
     		throw new RuntimeException("action is null.");
 		}
-    	
+
     	BufferedReader reader = null;
     	try {
 	    	reader = new BufferedReader(new FileReader(filePath));

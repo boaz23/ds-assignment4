@@ -1,6 +1,6 @@
 public class HashTable {
-	private int m2;
-	private HashList[] table;
+	private final int m2;
+	private final HashList[] table;
 	
 	public HashTable(String m2) {
 		this.m2 = Integer.parseInt(m2);
@@ -14,22 +14,11 @@ public class HashTable {
 		Utils.iterateFileLines(badPasswordsFilePath, password -> this.insert(password));
 	}
 
-	public void Requstedpass (String requestedPasswordsFilePath) {
-		if (requestedPasswordsFilePath == null || requestedPasswordsFilePath.equals("")) {
-			throw new RuntimeException("badPasswordsFilePath is null or empty.");
-		}
-		Utils.iterateFileLines(requestedPasswordsFilePath, password -> this.insert(password));
-	}
-
-	public boolean contains(String password) {
-		int key = Utils.hornerPassword(password);
+	public boolean contains(int key) {
 		int hash = this.hashFunction(key);
-		HashList list;
-		list = this.table[hash];
-		return list !=null && list.contains(key);
+		HashList list = this.table[hash];
+		return list != null && list.contains(key);
 	}
-
-
 
 	public void insert(String password) {
 		// convert the password to an integer using horner's rule

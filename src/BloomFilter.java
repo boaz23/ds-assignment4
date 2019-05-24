@@ -24,18 +24,18 @@ public class BloomFilter {
 	}
 
 	private void parseHashFunctionLine(String line) {
-		String[] hashFunctionParams = line.split("_");
 		try {
+			String[] hashFunctionParams = line.split("_");
 			int alpha = Integer.parseInt(hashFunctionParams[0]);
 			int beta = Integer.parseInt(hashFunctionParams[1]);
+			
+			// add a new hash function to the list with the given alpha, beta and m1
+			HashFunction hashFunction = new HashFunctionImpl(alpha, beta, this.m1);
+			this.hashFunctions.addLast(hashFunction);
 		}
 		catch (NumberFormatException e) {
 			throw new RuntimeException("hash function's alpha or beta is not a number", e);
 		}
-		
-		// add a new hash function to the list with the given alpha, beta and m1
-		HashFunction hashFunction = new HashFunctionImpl(alpha, beta, this.m1);
-		this.hashFunctions.addLast(hashFunction);
 	}
 	
 	public void updateTable(String badPasswordsFilePath) {

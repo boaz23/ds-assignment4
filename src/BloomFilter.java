@@ -58,7 +58,6 @@ public class BloomFilter {
 	/**
 	 * Returns whether the password is in the bloom filter
 	 * @param password The password
-	 * @return
 	 */
 	public boolean contains(String password) {
 		int key = Utils.hornerPassword(password);
@@ -69,7 +68,6 @@ public class BloomFilter {
 	/**
 	 * Returns whether the key (converted number of a password) is in our bad password bloom filter.
 	 * @param key The key
-	 * @return
 	 */
 	public boolean contains(int key) {
 		boolean contains = true;

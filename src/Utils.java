@@ -13,7 +13,6 @@ public class Utils {
      * Hash the given string to a integer using horner's rule
      * on the bytes composing the string
      * @param password The password
-     * @return
      */
     public static int hornerPassword(String password) {
     	if (password == null) {

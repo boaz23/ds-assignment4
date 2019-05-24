@@ -11,10 +11,26 @@ public class HashTable {
     	if (badPasswordsFilePath == null || badPasswordsFilePath.equals("")) {
     		throw new RuntimeException("badPasswordsFilePath is null or empty.");
     	}
-
 		Utils.iterateFileLines(badPasswordsFilePath, password -> this.insert(password));
 	}
-	
+
+	public void Requstedpass (String requestedPasswordsFilePath) {
+		if (requestedPasswordsFilePath == null || requestedPasswordsFilePath.equals("")) {
+			throw new RuntimeException("badPasswordsFilePath is null or empty.");
+		}
+		Utils.iterateFileLines(requestedPasswordsFilePath, password -> this.insert(password));
+	}
+
+	public boolean contains(String password) {
+		int key = Utils.hornerPassword(password);
+		int hash = this.hashFunction(key);
+		HashList list;
+		list = this.table[hash];
+		return list !=null && list.contains(key);
+	}
+
+
+
 	public void insert(String password) {
 		// convert the password to an integer using horner's rule
 		int key = Utils.hornerPassword(password);
@@ -32,7 +48,7 @@ public class HashTable {
 		}
 		
 		// add a new element to the list
-		list.addLast(new HashListElement(key, password));
+		list.addLast(key);
 	}
 	
 	public int hashFunction(int key) {

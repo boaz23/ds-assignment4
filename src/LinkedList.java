@@ -18,7 +18,7 @@ public class LinkedList<E> implements Iterable<E> {
             throw new RuntimeException("element is null.");
         }
         
-        Link<E> newLink = new Link<>(element);
+        Link<E> newLink = this.createLink(element);
         if (this.isEmpty()) {
             this.head = newLink;
             this.tail = newLink;
@@ -27,6 +27,21 @@ public class LinkedList<E> implements Iterable<E> {
         	this.tail.setNext(newLink);
         	this.tail = newLink;
         }
+    }
+
+    protected Link<E> createLink(E data) {
+         return new Link<E>(data);
+    }
+
+    public boolean contains(E element) {
+        boolean found = false;
+        for (E data : this){
+            if (data.equals(element)) {
+                found = true;
+                break;
+            }
+        }
+        return found;
     }
 
     public Iterator<E> iterator() {

@@ -1,13 +1,37 @@
 public class Main {
     public static void main(String[] args) {
-    }
+		//Create the Bloom Filter.
+		BloomFilter bloomFilter = contructBloomFilter("32");
+
+		//Create the Hash Table.
+		HashTable hashTable = contructHashTable("32");
+
+		//Find the percentage of false-positives
+		String falsePositivesPercent = bloomFilter.getFalsePositivePercentage(hashTable, System.getProperty("user.dir")+"/requested_passwords.txt");
+		String rejectedPasswordsAmount = bloomFilter.getRejectedPasswordsAmount(System.getProperty("user.dir")+"/requested_passwords.txt");
+        System.out.println(falsePositivesPercent + "\n" + rejectedPasswordsAmount);
+		//Find the number of rejected passwords
+		//Find the number of rejected passwords
+
+	}
     
     private static BloomFilter contructBloomFilter(String m1) {
 		BloomFilter bloomFilter = new BloomFilter(m1, System.getProperty("user.dir")+"/hash_functions.txt");
 		//update the Bloom Filter's table with the bad passwords
 		bloomFilter.updateTable(System.getProperty("user.dir")+"/bad_passwords.txt");
 		return bloomFilter;
+
 	}
+
+	private static HashTable contructHashTable(String m2) {
+		HashTable hashTable = new HashTable(m2);
+		//update the Hash Table with the bad passwords
+		hashTable.updateTable(System.getProperty("user.dir")+"/bad_passwords.txt");
+		return hashTable;
+	}
+
+
+
 
 //    private static void BitArrayTest() {
 //        byte a = (byte)(1 << 7);

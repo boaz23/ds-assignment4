@@ -1,3 +1,4 @@
+
 public class BloomFilter {
 	private int m1;
 	private BitArray bitArray;
@@ -44,4 +45,57 @@ public class BloomFilter {
 			this.bitArray.set(index, true);
 		}
 	}
+	// here we going to check if the password contains in our bad password bloomfilter array.
+	public boolean contains(String password) {
+		boolean contains = true;
+		int key = Utils.hornerPassword(password);
+		for (HashFunction hashFunction : this.hashFunctions) {
+			int index = hashFunction.hash(key);
+			if  (this.bitArray.get(index) == false){
+				contains = false;
+				break;
+			}
+		}
+
+		return contains;
+	}
+
+	public String getFalsePositivePercentage(HashTable table, String filePath){
+		FileLinesIterator itar = null;
+		int falsepositive = 0;
+		int notfoundinhashtable = 0;
+		try {
+			itar = new FileLinesIterator(filePath);
+			for (String line : itar) {
+				if (!table.contains(line)) {
+					notfoundinhashtable++;
+					if (this.contains(line))
+						falsepositive++;
+				}
+			}
+		}
+		finally {
+			if (itar != null)
+				itar.close();
+		}
+		double precent = ((double)falsepositive / notfoundinhashtable );
+		 return "" + precent;
+		}
+	public String getRejectedPasswordsAmount(String filePath){
+		FileLinesIterator itar = null;
+		int badpasswords = 0;
+		try {
+			itar = new FileLinesIterator(filePath);
+			for (String line : itar) {
+				if ( this.contains(line))
+					badpasswords++;
+			}
+		}
+		finally {
+			if (itar != null)
+				itar.close();
+		}
+		return "" + badpasswords;
+	}
+
 }

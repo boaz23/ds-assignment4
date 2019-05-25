@@ -176,7 +176,7 @@ public class BTreeNode {
             }
         }
         // password < keys[i] | i == n
-        else {
+        else if (!leaf) {
             if (y.n == y.minKeys()) {
                 BTreeNode leftSibling = null;
                 BTreeNode rightSibling = null;

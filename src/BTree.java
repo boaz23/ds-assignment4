@@ -15,11 +15,11 @@ public class BTree {
     }
 
     public NodeIndexPair search(String password) {
-        return root.search(password);
+        return root.search(password.toLowerCase());
     }
 
     public void delete(String password) {
-        this.root = root.rootDelete(password);
+        this.root = root.rootDelete(password.toLowerCase());
     }
 
     @Override

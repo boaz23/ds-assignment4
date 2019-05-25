@@ -88,4 +88,44 @@ public class Utils {
 		DecimalFormat format = new DecimalFormat("#.####");
 		return format.format(milliseconds);
 	}
+
+	/**
+	 * Takes items from the source array and puts them into the destination array
+	 * (source array items are set to null)
+	 * @param source The source array
+	 * @param sourceStartIndex The index in the source array at which to start talking items
+	 * @param dest The destination array
+	 * @param destStartIndex THe index in the destination array at which to start placing items
+	 * @param count The amount of items to take
+	 */
+	public static <T> void takeItems(T[] source, int sourceStartIndex, T[] dest, int destStartIndex, int count) {
+		for (int i = 0; i < count; i++) {
+			dest[destStartIndex + i] = source[sourceStartIndex + i];
+			source[sourceStartIndex + i] = null;
+		}
+	}
+
+	/**
+	 * Shifts all items of indices in the range [leftIndex, rightIndex] to the right by 1.
+	 * @param array The array
+	 * @param leftIndex The lower index bound (inclusive)
+	 * @param rightIndex The upper index bound (inclusive)
+	 */
+	public static <T> void rightShift(T[] array, int leftIndex, int rightIndex) {
+		for (int i = rightIndex; i >= leftIndex; i--) {
+			array[i + 1] = array[i];
+		}
+	}
+
+	/**
+	 * Shifts all items of indices in the range [leftIndex, rightIndex] to the left by 1
+	 * @param array The array
+	 * @param leftIndex The lower index bound (inclusive)
+	 * @param rightIndex The upper index bound (non-inclusive)
+	 */
+	public static <T> void leftShift(T[] array, int leftIndex, int rightIndex) {
+		for (int i = leftIndex - 1; i < rightIndex; i++) {
+			array[i] = array[i + 1];
+		}
+	}
 }

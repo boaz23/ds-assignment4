@@ -7,11 +7,11 @@ public class NodeIndexPair {
         this.index = index;
     }
 
-    public BTreeNode getNode() {
+    public BTreeNode node() {
         return node;
     }
 
-    public int getIndex() {
+    public int index() {
         return index;
     }
 }

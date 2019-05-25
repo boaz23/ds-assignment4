@@ -11,7 +11,7 @@ public class BTree {
     }
 
     public void insert(String password) {
-        root = root.rootInsert(password.toLowerCase());
+        rootInsert(password.toLowerCase());
     }
 
     public NodeIndexPair search(String password) {
@@ -19,7 +19,7 @@ public class BTree {
     }
 
     public void delete(String password) {
-        this.root = root.rootDelete(password.toLowerCase());
+        rootDelete(password.toLowerCase());
     }
 
     @Override
@@ -40,5 +40,38 @@ public class BTree {
 
     public void deleteKeysFromTree(String filePath) {
         Utils.iterateFileLines(filePath, password -> this.delete(password));
+    }
+
+    /**
+     * Inserts the key, should be called on the root only
+     * @param password The key to insert
+     */
+     private void rootInsert(String password) {
+        // if the root is full, we need to split it and make a new root
+        if (root.isFull()) {
+            // make a new root node
+            BTreeNode newRoot = root.createRootNode();
+            root.root = false;
+            newRoot.children[0] = root;
+
+            newRoot.splitChild(0);
+            newRoot.insertNonFull(password);
+
+            root = newRoot;
+        }
+        // find the right leaf and insert there
+        else {
+            root.insertNonFull(password);
+        }
+    }
+
+    private void rootDelete(String password) {
+        if (root.needsKey() & root.children[0].needsKey() & root.children[1].needsKey()) {
+            BTreeNode newRoot = root.merge(0);
+            newRoot.root = root.root;
+            root = newRoot;
+        }
+
+        root.deleteNotMinimumKeys(password);
     }
 }

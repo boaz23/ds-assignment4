@@ -1,10 +1,10 @@
 public class BTreeNode {
-    private String[] keys;
-    private BTreeNode[] children;
-    private int t;
-    private int n;
-    private boolean leaf;
-    private boolean root;
+    String[] keys;
+    BTreeNode[] children;
+    int t;
+    int n;
+    boolean leaf;
+    boolean root;
 
     BTreeNode(int t, boolean root) {
         this.t = t;
@@ -19,29 +19,114 @@ public class BTreeNode {
         this(t,false);
     }
 
-    protected int minKeys() { return root ? 1 : t-1;}
-    protected int maxKeys() { return 2*t-1;}
+    private int minKeys() { return root ? 1 : t - 1;}
+    private int maxKeys() { return 2*t - 1;}
 
     public boolean isEmpty() {
         return n == 0;
     }
+    public boolean isFull() {
+        return n == 2*t - 1;
+    }
+    public boolean needsKey() {
+        return n == t - 1;
+    }
 
     public NodeIndexPair search(String password) {
-        NodeIndexPair nodeIndexPair = this.searchLocal(password);
-        if (isKeyInThis(nodeIndexPair)) {
-            return nodeIndexPair;
+        FoundIndexPair searchResult = localSearch(password);
+        if (keyIsInThisNode(searchResult)) {
+            return new NodeIndexPair(this, searchResult.index());
         }
         // we haven't found, nowhere else to look for the key
         else if (leaf) {
             return null;
         }
-        // we haven't found, nowhere else to look for the key
+        // we haven't found, look for the key in the child
         else {
-            return children[nodeIndexPair.getIndex()].search(password);
+            return children[searchResult.index()].search(password);
         }
     }
 
-    private NodeIndexPair searchLocal(String password) {
+    public NodeIndexPair findSuccessor(int i) {
+        NodeIndexPair nodeIndexPair;
+        if (leaf) {
+            if (i < n - 1) {
+                nodeIndexPair = new NodeIndexPair(this, i + 1);
+            }
+            else {
+                nodeIndexPair = new NodeIndexPair(null, i);
+            }
+        }
+        else {
+            nodeIndexPair = children[i + 1].findMinimum();
+        }
+
+        return nodeIndexPair;
+    }
+
+    public NodeIndexPair findPredecessor(int i) {
+        NodeIndexPair nodeIndexPair;
+        if (leaf) {
+            if (i > 0) {
+                nodeIndexPair = new NodeIndexPair(this, i - 1);
+            }
+            else {
+                nodeIndexPair = new NodeIndexPair(null, i);
+            }
+        }
+        else {
+            nodeIndexPair = children[i].findMaximum();
+        }
+
+        return nodeIndexPair;
+    }
+
+    public NodeIndexPair findMinimum() {
+        NodeIndexPair nodeIndexPair;
+        if (n == 0) {
+            nodeIndexPair = new NodeIndexPair(null, -1);
+        }
+        else {
+            BTreeNode node = this;
+            while (!node.leaf) {
+                node = node.children[0];
+            }
+
+            nodeIndexPair = new NodeIndexPair(node, 0);
+        }
+
+        return nodeIndexPair;
+    }
+
+    public NodeIndexPair findMaximum() {
+        NodeIndexPair nodeIndexPair;
+        if (n == 0) {
+            nodeIndexPair = new NodeIndexPair(null, -1);
+        }
+        else {
+            BTreeNode node = this;
+            while (!node.leaf) {
+                node = node.children[node.n];
+            }
+
+            nodeIndexPair = new NodeIndexPair(node, node.n - 1);
+        }
+
+        return nodeIndexPair;
+    }
+
+    @Override
+    public String toString() {
+        return isEmpty() ? "" : toString(0);
+    }
+
+    /**
+     * Search only this node for the given key (without diving down to the children)
+     * @param password The key to look for
+     * @return An object which holds whether the key was found in this node and
+     * the the first index of from the left which is bigger than the given key
+     */
+    private FoundIndexPair localSearch(String password) {
         int i = 0;
         int compareResult = 0;
 
@@ -51,347 +136,291 @@ public class BTreeNode {
 
         // if we're still in bounds of this node the last compare
         // result is 0, then we found it
-        if (i < n & compareResult == 0)
-            return new NodeIndexPair(this, i);
-        else
-            return new NodeIndexPair(null, i);
+        boolean found = i < n & compareResult == 0;
+        return new FoundIndexPair(found, i);
     }
 
-    BTreeNode rootInsert(String password) {
-        // if this node is full, need to split
-        if (n == maxKeys()) {
-            BTreeNode s = new BTreeNode(t, root);
-            root = false;
-            s.leaf = false;
-            s.n = 0;
-            s.children[0] = this;
-            s.splitChild(0);
-            s.insertNonfull(password);
-            return s;
-        }
-        // find the right leaf and insert there
-        else {
-            insertNonfull(password);
-            return this;
-        }
+    BTreeNode createRootNode() {
+        BTreeNode newRoot = new BTreeNode(t, root);
+        newRoot.leaf = false;
+        newRoot.n = 0;
+        return newRoot;
     }
 
-    protected void splitChild(int i) {
-        BTreeNode y = children[i];
-        BTreeNode z = createNewSplitNode(y.leaf);
+    void splitChild(int i) {
+        BTreeNode leftChild = children[i];
+        BTreeNode newRightChild = leftChild.createNewSplitNode();
 
-        for (int j = 0; j < t-1; j++) {
-            z.keys[j] = y.keys[j + t];
-            y.keys[j + t] = null;
+        // take the keys t+1,...,2t-1 from the child we're splitting
+        // and put them as the keys 1,...,t respectively in the new node.
+        newRightChild.takeKeysFrom(leftChild, t,0, t - 1);
+        if (!leftChild.leaf) {
+            // take the children t+1,...,2t from the child we're splitting
+            // and put them as the children 1,...,t in the new node.
+            newRightChild.takeChildrenFrom(leftChild, t,0, t);
         }
 
-        if (!y.leaf) {
-            for (int j = 0; j < t; j++) {
-                z.children[j] = y.children[j + t];
-                y.children[j + t] = null;
-            }
-        } //if
+        // make room for the key number t (the middle key) of the full node
+        // so we can place it as the i+1 key
+        Utils.rightShift(keys, i,n - 1);
+        takeKeyFrom(leftChild, t - 1, i);
 
-        for (int j = n; j > i; j--)
-            children[j+1] = children[j];
-
-        children[i+1] = z;
-
-        for (int j = n-1; j >= i; j--)
-            keys[j+1] = keys[j];
-
-        keys[i] = y.keys[t-1];
-        y.keys[t-1] = null;
+        // make room for the new node (which will be placed after the node we're splitting
+        Utils.rightShift(children,i + 1, n);
+        children[i + 1] = newRightChild;
 
         n++;
-        y.n = t-1;
+        leftChild.n = leftChild.minKeys();
     }
 
-    private BTreeNode createNewSplitNode(boolean leaf) {
-        BTreeNode z = new BTreeNode(t);
-        z.leaf = leaf;
-        z.n = t-1;
-        return z;
-    }
-
-    private void insertNonfull(String password) {
-        int i = n-1;
+    void insertNonFull(String password) {
+        int i;
         if (leaf) {
-            for (; i >= 0 && compare(password, keys[i]) < 0; i--) {
-                keys[i+1] = keys[i];
-            } //while , we doing shift to the right
-            keys[i+1] = password;
+            // look for the right place for the new key and make room for it
+            // while we go
+            i = rightShiftKeysBiggerThan(password);
+            keys[i + 1] = password;
             n++;
         } // if
         else {
-            for (; i >= 0 && compare(password, keys[i]) < 0; i--) {}
-            i++;
-            if (children[i].n == children[i].maxKeys()) {
+            // find the child which the key should go into
+            i = localSearch(password).index();
+
+            // we need to split the child it is full
+            if (children[i].isFull()) {
                 splitChild(i);
                 if (compare(password, keys[i]) > 0) {
                     i++;
                 }
             }
-            children[i].insertNonfull(password);
+            children[i].insertNonFull(password);
         }
     }
 
-    BTreeNode rootDelete(String password) {
-        BTreeNode root;
-        if (n == minKeys() & children[0].n == children[0].minKeys() & children[1].n == children[1].minKeys()) {
-            root = merge(0);
-            root.root = this.root;
-        }
-        else {
-            root = this;
+    /**
+     * Look for the first key from the right which is smaller than the specified key
+     * and right shift all the keys when doing it
+     * @param password The key
+     */
+    private int rightShiftKeysBiggerThan(String password) {
+        int i;
+        for (i = n - 1; i >= 0 && compare(password, keys[i]) < 0; i--) {
+            keys[i + 1] = keys[i];
         }
 
-        root.deleteNotMinimumKeys(password);
-        return root;
+        return i;
     }
 
-    public void deleteNotMinimumKeys(String password) {
-        NodeIndexPair nodeIndexPair = searchLocal(password);
-        int i = nodeIndexPair.getIndex();
-        BTreeNode y = children[i];
-        if (isKeyInThis(nodeIndexPair)) {
-            BTreeNode z = children[i+1];
+    private BTreeNode createNewSplitNode() {
+        BTreeNode splitNode = new BTreeNode(t);
+        splitNode.leaf = leaf;
+        splitNode.n = splitNode.minKeys();
+        return splitNode;
+    }
 
-            // case 1
-            if (this.leaf) {
-                deleteFromLeaf(i);
-            }
-            // case 2
-            else if (y.n > y.minKeys()) {
-                replaceWithPredecessorAndDelete(i);
-            }
-            // case 3
-            else if (z.n > z.minKeys()) {
-                replaceWithSuccessorAndDelete(i);
-            }
-            // case 4
-            else {
-                y = merge(i);
-                y.deleteNotMinimumKeys(password);
-            }
+    private void takeChildrenFrom(BTreeNode from, int fromStartIndex, int thisStartIndex, int count) {
+        Utils.takeItems(from.children, fromStartIndex, children, thisStartIndex, count);
+    }
+
+    private void takeKeysFrom(BTreeNode from, int fromStartIndex, int thisStartIndex, int count) {
+        Utils.takeItems(from.keys, fromStartIndex, keys, thisStartIndex, count);
+    }
+
+    private void takeKeyFrom(BTreeNode from, int fromKeyIndex, int thisKeyIndex) {
+        takeKeysFrom(from, fromKeyIndex, thisKeyIndex, 1);
+    }
+
+    private void takeChildFrom(BTreeNode from, int fromChildIndex, int thisChildIndex) {
+        takeChildrenFrom(from, fromChildIndex, thisChildIndex, 1);
+    }
+
+
+    void deleteNotMinimumKeys(String password) {
+        FoundIndexPair searchResult = localSearch(password);
+        int i = searchResult.index();
+        if (keyIsInThisNode(searchResult)) {
+            deleteNotMinimumKeysInThis(password, i);
         }
         // password < keys[i] | i == n
+        // if it's a leaf, then the key is not in the tree, so nothing to do
         else if (!leaf) {
-            if (y.n == y.minKeys()) {
-                BTreeNode leftSibling = null;
-                BTreeNode rightSibling = null;
-                if (i > 0 && (leftSibling = children[i - 1]).n > leftSibling.minKeys()) {
-                    shiftRight(i);
-                }
-                else if (i < n && (rightSibling = children[i + 1]).n > rightSibling.minKeys()) {
-                    shiftLeft(i);
-                }
-                else if (leftSibling != null) {
-                    y = merge(i - 1);
-                }
-                else { // rightSibling != null
-                    y = merge(i);
-                }
-            }
-
-            y.deleteNotMinimumKeys(password);
+            deleteNotMinimumKeysInChild(password, i);
         }
     }
 
-    private void shiftRight(int i) {
-        BTreeNode y = children[i];
+    private void deleteNotMinimumKeysInThis(String password, int i) {
+        BTreeNode leftChild = children[i];
+        BTreeNode rightChild = children[i + 1];
 
-        // right shift all the keys in y and put keys[i - 1] in 0
-        for (int j = y.n; j > 0; j--) {
-            y.keys[j] = y.keys[j - 1];
+        // case 1
+        if (leaf) {
+            deleteFromLeaf(i);
         }
-        y.keys[0] = keys[i - 1];
-        y.n++;
-
-        // take leftSibling.keys[leftSibling.n - 1] and put in keys[i - 1]
-        BTreeNode leftSibling = children[i - 1];
-        keys[i - 1] = leftSibling.keys[leftSibling.n - 1];
-        leftSibling.n--;
-        leftSibling.keys[leftSibling.n] = null;
-
-        // take the right most child of leftSibling and put it as the left most child of y
-        if (!y.leaf) {
-            for (int j = y.n + 1; j > 0; j++) {
-                y.children[j] = y.children[j - 1];
-            }
-            y.children[0] = leftSibling.children[leftSibling.n];
-            leftSibling.children[leftSibling.n] = null;
+        // case 2
+        else if (!leftChild.needsKey()) {
+            replaceWithPredecessorAndDeleteItRecursively(i);
+        }
+        // case 3
+        else if (!rightChild.needsKey()) {
+            replaceWithSuccessorAndDeleteItRecursively(i);
+        }
+        // merge with right child and delete the key recursively
+        else {
+            leftChild = merge(i);
+            leftChild.deleteNotMinimumKeys(password);
         }
     }
 
-    private void shiftLeft(int i) {
-        BTreeNode y = children[i];
-        BTreeNode rightSibling = children[i + 1];
-
-        y.keys[y.n] = keys[i];
-        y.n++;
-        if (!y.leaf) {
-            y.children[y.n] = rightSibling.children[0];
-        }
-
-        keys[i] = rightSibling.keys[0];
-        for (int j = 0; j < rightSibling.n - 1; j++) {
-            rightSibling.keys[j] = rightSibling.keys[j + 1];
-            if (!rightSibling.leaf) {
-                rightSibling.children[j] = rightSibling.children[j + 1];
+    private void deleteNotMinimumKeysInChild(String password, int i) {
+        BTreeNode leftChild = children[i];
+        if (leftChild.needsKey()) {
+            // shift with left sibling
+            if (i > 0 && !children[i - 1].needsKey()) {
+                shiftRight(i);
+            }
+            // shift with right sibling
+            else if (i < n && !children[i + 1].needsKey()) {
+                shiftLeft(i);
+            }
+            // merge with left sibling
+            else if (i > 0) {
+                leftChild = merge(i - 1);
+            }
+            // merge with right sibling
+            else {
+                leftChild = merge(i);
             }
         }
-        rightSibling.keys[rightSibling.n - 1] = null;
-        if (!rightSibling.leaf) {
-            rightSibling.children[rightSibling.n - 1] = rightSibling.children[rightSibling.n];
-            rightSibling.children[rightSibling.n] = null;
-        }
-        rightSibling.n--;
+
+        leftChild.deleteNotMinimumKeys(password);
     }
 
     private void deleteFromLeaf(int i) {
-        for (; i < n - 1; i++) {
-            keys[i] = keys[i + 1];
-        }
+        Utils.leftShift(keys, i + 1, n - 1);
         keys[n - 1] = null;
         n--;
     }
 
-    private void replaceWithPredecessorAndDelete(int i) {
+    private void replaceWithPredecessorAndDeleteItRecursively(int i) {
         NodeIndexPair nodeIndexPair = findPredecessor(i);
-        String predecessor = nodeIndexPair.getNode().keys[nodeIndexPair.getIndex()];
+        String predecessor = nodeIndexPair.node().keys[nodeIndexPair.index()];
         children[i].deleteNotMinimumKeys(predecessor);
         keys[i] = predecessor;
     }
 
-    private void replaceWithSuccessorAndDelete(int i) {
+    private void replaceWithSuccessorAndDeleteItRecursively(int i) {
         NodeIndexPair nodeIndexPair = findSuccessor(i);
-        String successor = nodeIndexPair.getNode().keys[nodeIndexPair.getIndex()];
+        String successor = nodeIndexPair.node().keys[nodeIndexPair.index()];
         children[i + 1].deleteNotMinimumKeys(successor);
         keys[i] = successor;
     }
 
-    private BTreeNode merge(int i) {
-        BTreeNode y = children[i];
-        BTreeNode z = children[i+1];
+    BTreeNode merge(int i) {
+        BTreeNode leftChild = children[i];
+        BTreeNode rightChild = children[i + 1];
 
-        BTreeNode merged = new BTreeNode(t);
-        merged.n = 2*t-1;
-        merged.leaf = y.leaf;
-
-        for (int j = 0; j < t-1; j++) {
-            merged.keys[j] = y.keys[j];
-            merged.children[j] = y.children[j];
-
-            merged.keys[j + t] = z.keys[j];
-            merged.children[j + t] = z.children[j];
+        leftChild.takeKeyFrom(this, i, t - 1);
+        leftChild.takeKeysFrom(rightChild, 0, t, t - 1);
+        if (!leftChild.leaf) {
+            leftChild.takeChildrenFrom(rightChild, 0, t, t);
         }
-        merged.keys[t-1] = keys[i];
-        merged.children[t-1] = y.children[t-1];
-        merged.children[2*t-1] = z.children[t-1];
 
-        // move keys and children 1 to the left
-        for (int j = i; j < n - 1; j++) {
-            keys[i] = keys[i + 1];
-        }
+        // we now have a free space in both arrays, we need to close it
+        Utils.leftShift(keys, i + 1, n - 1);
+        Utils.leftShift(children, i + 2, n);
         keys[n - 1] = null;
-
-        children[i] = merged;
-        for (int j = i + 1; j < n; j++) {
-            children[j] = children[j + 1];
-        }
         children[n] = null;
+
         n--;
+        leftChild.n = leftChild.maxKeys();
 
-        return merged;
+        return leftChild;
     }
 
-    private boolean isKeyInThis(NodeIndexPair nodeIndexPair) {
-        return nodeIndexPair.getNode() == this;
+    private void shiftRight(int i) {
+        BTreeNode leftChild = children[i];
+        BTreeNode leftSibling = children[i - 1];
+
+        // make room for the previous key
+        Utils.rightShift(leftChild.keys, 0, leftChild.n - 1);
+        leftChild.takeKeyFrom(this, i - 1, 0);
+
+        // take leftSibling.keys[leftSibling.n - 1] and put in keys[i - 1]
+        takeKeyFrom(leftSibling, leftSibling.n - 1, i - 1);
+
+        // take the right most child of leftSibling and put it as the left most child of leftChild
+        if (!leftChild.leaf) {
+            Utils.rightShift(leftChild.children, 0, leftChild.n);
+            leftChild.takeChildFrom(leftSibling, leftSibling.n, 0);
+        }
+
+        leftChild.n++;
+        leftSibling.n--;
     }
 
-    public NodeIndexPair findSuccessor(int i) {
-        if (leaf) {
-            if (i < n - 1) {
-                return new NodeIndexPair(this, i + 1);
-            }
+    private void shiftLeft(int i) {
+        BTreeNode leftChild = children[i];
+        BTreeNode rightSibling = children[i + 1];
 
-            return new NodeIndexPair(null, i);
+        leftChild.takeKeyFrom(this, i, leftChild.n);
+        takeKeyFrom(rightSibling, 0, i);
+        Utils.leftShift(rightSibling.keys, 1, rightSibling.n - 1);
+        rightSibling.keys[rightSibling.n - 1] = null;
+
+        if (!leftChild.leaf) {
+            leftChild.takeChildFrom(rightSibling, 0, leftChild.n + 1);
+            Utils.leftShift(rightSibling.children, 1, rightSibling.n);
+            rightSibling.children[n] = null;
         }
 
-        return children[i+1].findMinimum();
+        leftChild.n++;
+        rightSibling.n--;
     }
 
-    public NodeIndexPair findMinimum() {
-        if (n == 0) {
-            return new NodeIndexPair(null, -1);
-        }
-
-        BTreeNode node = this;
-        while (!node.leaf) {
-            node = node.children[0];
-        }
-
-        return new NodeIndexPair(node, 0);
-    }
-
-    public NodeIndexPair findPredecessor(int i) {
-        if (leaf) {
-            if (i > 0) {
-                return new NodeIndexPair(this, i - 1);
-            }
-
-            return new NodeIndexPair(null, i);
-        }
-
-        return children[i].findMaximum();
-    }
-
-    public NodeIndexPair findMaximum() {
-        if (n == 0) {
-            return new NodeIndexPair(null, -1);
-        }
-
-        BTreeNode node = this;
-        while (!node.leaf) {
-            node = node.children[node.n];
-        }
-
-        return new NodeIndexPair(node, node.n - 1);
+    private boolean keyIsInThisNode(FoundIndexPair localSearchResult) {
+        return localSearchResult.found();
     }
 
     // if password1 > password2 we return positive number
     // if password1 = password2 we return 0
     // if password1 < password2 we return negative number
-    protected int compare(String password1 , String password2) {
+    private int compare(String password1 , String password2) {
         return password1.compareTo(password2);
     }
 
-    @Override
-    public String toString() {
-        return isEmpty() ? "" : toString(0);
-    }
-
-    public String toString(int depth) {
-        String inorder = "";
+    private String toString(int depth) {
+        String s = "";
 
         if (leaf) {
-            inorder += keys[0] + "_"  + depth;
+            s += keyString(0, depth);
             for (int i = 1; i < n; i++) {
-                inorder += "," + keys[i] + "_" + depth;
+                s += "," + keyString(i, depth);
             } // for
         }
-        // not leaf
         else {
-            inorder += children[0].toString(depth + 1);
-            inorder += "," + keys[0] + "_" + depth;
+            s += childAndKeyString(0, depth);
             for (int i = 1; i < n; i++) {
-                inorder += "," + children[i].toString(depth + 1);
-                inorder += "," + keys[i] + "_" + depth;
+                s += "," + childAndKeyString(i, depth);
             } // for
-            inorder +=  "," + children[n].toString(depth+1);
+            s += "," + childString(n, depth);
         }
 
-        return inorder;
+        return s;
+    }
+
+    private String keyString(int i, int depth) {
+        return keys[i] + "_"  + depth;
+    }
+
+    private String childString(int i, int depth) {
+        return children[i].toString(depth + 1);
+    }
+
+    private String childAndKeyString(int i, int depth) {
+        String s = "";
+        s += childString(i, depth);
+        s += ",";
+        s += keyString(i, depth);
+        return s;
     }
 }

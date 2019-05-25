@@ -11,16 +11,20 @@ public class BTree {
     }
 
     public void insert(String password) {
-        root = root.insert(password.toLowerCase());
+        root = root.rootInsert(password.toLowerCase());
     }
 
     public NodeIndexPair search(String password) {
-        return this.root.search(password);
+        return root.search(password);
+    }
+
+    public void delete(String password) {
+        this.root = root.rootDelete(password);
     }
 
     @Override
     public String toString() {
-        return root.isEmpty() ? "" : root.toString(0);
+        return root.toString();
     }
 
     public void createFullTree(String filePath) {
@@ -35,6 +39,6 @@ public class BTree {
     }
 
     public void deleteKeysFromTree(String filePath) {
-
+        Utils.iterateFileLines(filePath, password -> this.delete(password));
     }
 }

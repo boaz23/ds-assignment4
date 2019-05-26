@@ -3,9 +3,7 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 /**
- * Iterator for lines of text files
- * 
- *
+ * Iterator for lines of text files.
  */
 public class FileLinesIterator implements Iterator<String>, Iterable<String>, Closeable {
     private FileReader fileReader;
@@ -26,24 +24,26 @@ public class FileLinesIterator implements Iterator<String>, Iterable<String>, Cl
         this.bufferedReader = new BufferedReader(this.fileReader);
     }
 
-
     /**
      * Returns whether the file has a next line
      */
     @Override
     public boolean hasNext() {
+        boolean hasNextLine;
         if (this.nextLine != null) {
-            return true;
+            hasNextLine = true;
         }
         else {
             try {
                 this.nextLine = this.bufferedReader.readLine();
-                return (this.nextLine != null);
+                hasNextLine = this.nextLine != null;
             }
             catch (IOException e) {
                 throw new RuntimeException("IO exception: " + e.getMessage(), e);
             }
         }
+
+        return hasNextLine;
     }
 
     /**
@@ -51,14 +51,13 @@ public class FileLinesIterator implements Iterator<String>, Iterable<String>, Cl
      */
     @Override
     public String next() {
-        if (this.nextLine != null || this.hasNext()) {
-            String line = this.nextLine;
-            this.nextLine = null;
-            return line;
-        }
-        else {
+        if (this.nextLine == null && !this.hasNext()) {
             throw new NoSuchElementException();
         }
+
+        String line = this.nextLine;
+        this.nextLine = null;
+        return line;
     }
     
     @Override

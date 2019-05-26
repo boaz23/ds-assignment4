@@ -83,7 +83,7 @@ public class BTreeNode {
 
     public NodeIndexPair findMinimum() {
         NodeIndexPair nodeIndexPair;
-        if (n == 0) {
+        if (isEmpty()) {
             nodeIndexPair = new NodeIndexPair(null, -1);
         }
         else {
@@ -100,7 +100,7 @@ public class BTreeNode {
 
     public NodeIndexPair findMaximum() {
         NodeIndexPair nodeIndexPair;
-        if (n == 0) {
+        if (isEmpty()) {
             nodeIndexPair = new NodeIndexPair(null, -1);
         }
         else {
@@ -160,14 +160,9 @@ public class BTreeNode {
             newRightChild.takeChildrenFrom(leftChild, t,0, t);
         }
 
-        // make room for the key number t (the middle key) of the full node
-        // so we can place it as the i+1 key
-        Utils.rightShift(keys, i,n - 1);
-        takeKeyFrom(leftChild, t - 1, i);
-
-        // make room for the new node (which will be placed after the node we're splitting
-        Utils.rightShift(children,i + 1, n);
-        children[i + 1] = newRightChild;
+        Utils.insert(keys, leftChild.keys[t - 1], i, n - 1);
+        Utils.insert(children, newRightChild, i + 1, n);
+        leftChild.keys[t - 1] = null;
 
         n++;
         leftChild.n = leftChild.minKeys();
@@ -225,15 +220,6 @@ public class BTreeNode {
     private void takeKeysFrom(BTreeNode from, int fromStartIndex, int thisStartIndex, int count) {
         Utils.takeItems(from.keys, fromStartIndex, keys, thisStartIndex, count);
     }
-
-    private void takeKeyFrom(BTreeNode from, int fromKeyIndex, int thisKeyIndex) {
-        takeKeysFrom(from, fromKeyIndex, thisKeyIndex, 1);
-    }
-
-    private void takeChildFrom(BTreeNode from, int fromChildIndex, int thisChildIndex) {
-        takeChildrenFrom(from, fromChildIndex, thisChildIndex, 1);
-    }
-
 
     void deleteNotMinimumKeys(String password) {
         FoundIndexPair searchResult = localSearch(password);
@@ -296,8 +282,7 @@ public class BTreeNode {
     }
 
     private void deleteFromLeaf(int i) {
-        Utils.leftShift(keys, i + 1, n - 1);
-        keys[n - 1] = null;
+        Utils.remove(keys, i, n - 1);
         n--;
     }
 
@@ -317,23 +302,16 @@ public class BTreeNode {
 
     BTreeNode merge(int i) {
         BTreeNode leftChild = children[i];
-        BTreeNode rightChild = children[i + 1];
 
-        leftChild.takeKeyFrom(this, i, t - 1);
+        leftChild.keys[t - 1] = Utils.remove(keys, i, n - 1);
+        BTreeNode rightChild = Utils.remove(children, i + 1, n - 1);
         leftChild.takeKeysFrom(rightChild, 0, t, t - 1);
         if (!leftChild.leaf) {
             leftChild.takeChildrenFrom(rightChild, 0, t, t);
         }
 
-        // we now have a free space in both arrays, we need to close it
-        Utils.leftShift(keys, i + 1, n - 1);
-        Utils.leftShift(children, i + 2, n);
-        keys[n - 1] = null;
-        children[n] = null;
-
         n--;
         leftChild.n = leftChild.maxKeys();
-
         return leftChild;
     }
 
@@ -341,17 +319,11 @@ public class BTreeNode {
         BTreeNode leftChild = children[i];
         BTreeNode leftSibling = children[i - 1];
 
-        // make room for the previous key
-        Utils.rightShift(leftChild.keys, 0, leftChild.n - 1);
-        leftChild.takeKeyFrom(this, i - 1, 0);
-
-        // take leftSibling.keys[leftSibling.n - 1] and put in keys[i - 1]
-        takeKeyFrom(leftSibling, leftSibling.n - 1, i - 1);
-
-        // take the right most child of leftSibling and put it as the left most child of leftChild
+        Utils.insert(leftChild.keys, keys[i - 1], 0, leftChild.n - 1);
+        keys[i - 1] = Utils.remove(leftSibling.keys, leftSibling.n - 1, leftSibling.n - 1);
         if (!leftChild.leaf) {
-            Utils.rightShift(leftChild.children, 0, leftChild.n);
-            leftChild.takeChildFrom(leftSibling, leftSibling.n, 0);
+            BTreeNode child = Utils.remove(leftSibling.children, leftSibling.n, leftSibling.n);
+            Utils.insert(leftChild.children, child, 0, leftChild.n);
         }
 
         leftChild.n++;
@@ -362,15 +334,12 @@ public class BTreeNode {
         BTreeNode leftChild = children[i];
         BTreeNode rightSibling = children[i + 1];
 
-        leftChild.takeKeyFrom(this, i, leftChild.n);
-        takeKeyFrom(rightSibling, 0, i);
-        Utils.leftShift(rightSibling.keys, 1, rightSibling.n - 1);
-        rightSibling.keys[rightSibling.n - 1] = null;
+        Utils.insert(leftChild.keys, keys[i], leftChild.n, leftChild.n - 1);
+        keys[i] = Utils.remove(rightSibling.keys, 0, rightSibling.n - 1);
 
         if (!leftChild.leaf) {
-            leftChild.takeChildFrom(rightSibling, 0, leftChild.n + 1);
-            Utils.leftShift(rightSibling.children, 1, rightSibling.n);
-            rightSibling.children[n] = null;
+            BTreeNode child = Utils.remove(rightSibling.children, 0, rightSibling.n);
+            Utils.insert(leftChild.children, child, leftChild.n + 1, leftChild.n);
         }
 
         leftChild.n++;

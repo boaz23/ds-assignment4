@@ -44,7 +44,7 @@ public class BTree {
 
     /**
      * Inserts the key, should be called on the root only
-     * @param password The key to insert
+     * @param password The key to insertAt
      */
      private void rootInsert(String password) {
         // if the root is full, we need to split it and make a new root
@@ -52,21 +52,18 @@ public class BTree {
             // make a new root node
             BTreeNode newRoot = root.createRootNode();
             root.root = false;
-            newRoot.children[0] = root;
+            newRoot.children.set(0, root);
 
             newRoot.splitChild(0);
-            newRoot.insertNonFull(password);
-
             root = newRoot;
         }
-        // find the right leaf and insert there
-        else {
-            root.insertNonFull(password);
-        }
+
+         // find the right leaf and insertAt there
+         root.insertNonFull(password);
     }
 
     private void rootDelete(String password) {
-        if (root.needsKey() & root.children[0].needsKey() & root.children[1].needsKey()) {
+        if (root.needsKey() & root.children.get(0).needsKey() & root.children.get(1).needsKey()) {
             BTreeNode newRoot = root.merge(0);
             newRoot.root = root.root;
             root = newRoot;

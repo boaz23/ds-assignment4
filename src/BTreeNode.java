@@ -1,6 +1,6 @@
 public class BTreeNode {
-    String[] keys;
-    BTreeNode[] children;
+    Array<String> keys;
+    Array<BTreeNode> children;
     int t;
     int n;
     boolean leaf;
@@ -10,31 +10,39 @@ public class BTreeNode {
         this.t = t;
         leaf = true;
         this.root = root;
-        keys = new String[2*t - 1];
-        children = new BTreeNode[2*t];
         n = 0;
+        keys = new Array<>(new String[2*t - 1]);
+        children = new Array<>(new BTreeNode[keys.capacity() + 1]);
     }
 
     BTreeNode(int t) {
         this(t,false);
     }
 
-    private int minKeys() { return root ? 1 : t - 1;}
-    private int maxKeys() { return 2*t - 1;}
+    private int minKeys() {
+        return root ? 1 : t - 1;
+    }
+    private int maxKeys() {
+        return keys.capacity();
+    }
+
+    public int size() {
+        return n;
+    }
 
     public boolean isEmpty() {
-        return n == 0;
+        return size() == 0;
     }
     public boolean isFull() {
-        return n == 2*t - 1;
+        return size() == maxKeys();
     }
     public boolean needsKey() {
-        return n == t - 1;
+        return size() == minKeys();
     }
 
     public NodeIndexPair search(String password) {
         FoundIndexPair searchResult = localSearch(password);
-        if (keyIsInThisNode(searchResult)) {
+        if (searchResult.found()) {
             return new NodeIndexPair(this, searchResult.index());
         }
         // we haven't found, nowhere else to look for the key
@@ -43,14 +51,14 @@ public class BTreeNode {
         }
         // we haven't found, look for the key in the child
         else {
-            return children[searchResult.index()].search(password);
+            return children.get(searchResult.index()).search(password);
         }
     }
 
     public NodeIndexPair findSuccessor(int i) {
         NodeIndexPair nodeIndexPair;
         if (leaf) {
-            if (i < n - 1) {
+            if (i < size() - 1) {
                 nodeIndexPair = new NodeIndexPair(this, i + 1);
             }
             else {
@@ -58,7 +66,7 @@ public class BTreeNode {
             }
         }
         else {
-            nodeIndexPair = children[i + 1].findMinimum();
+            nodeIndexPair = children.get(i + 1).findMinimum();
         }
 
         return nodeIndexPair;
@@ -75,7 +83,7 @@ public class BTreeNode {
             }
         }
         else {
-            nodeIndexPair = children[i].findMaximum();
+            nodeIndexPair = children.get(i).findMaximum();
         }
 
         return nodeIndexPair;
@@ -89,7 +97,7 @@ public class BTreeNode {
         else {
             BTreeNode node = this;
             while (!node.leaf) {
-                node = node.children[0];
+                node = node.children.get(0);
             }
 
             nodeIndexPair = new NodeIndexPair(node, 0);
@@ -106,10 +114,10 @@ public class BTreeNode {
         else {
             BTreeNode node = this;
             while (!node.leaf) {
-                node = node.children[node.n];
+                node = node.children.get(node.size());
             }
 
-            nodeIndexPair = new NodeIndexPair(node, node.n - 1);
+            nodeIndexPair = new NodeIndexPair(node, node.size() - 1);
         }
 
         return nodeIndexPair;
@@ -131,12 +139,12 @@ public class BTreeNode {
         int compareResult = 0;
 
         // find the first index such that the key is smaller than the key in that index
-        while (i < n && (compareResult = compare(password, keys[i])) > 0)
+        while (i < size() && (compareResult = compareWithKetAt(password, i)) > 0)
             i++;
 
         // if we're still in bounds of this node the last compare
         // result is 0, then we found it
-        boolean found = i < n & compareResult == 0;
+        boolean found = i < size() & compareResult == 0;
         return new FoundIndexPair(found, i);
     }
 
@@ -148,7 +156,7 @@ public class BTreeNode {
     }
 
     void splitChild(int i) {
-        BTreeNode leftChild = children[i];
+        BTreeNode leftChild = children.get(i);
         BTreeNode newRightChild = leftChild.createNewSplitNode();
 
         // take the keys t+1,...,2t-1 from the child we're splitting
@@ -160,9 +168,9 @@ public class BTreeNode {
             newRightChild.takeChildrenFrom(leftChild, t,0, t);
         }
 
-        Utils.insert(keys, leftChild.keys[t - 1], i, n - 1);
-        Utils.insert(children, newRightChild, i + 1, n);
-        leftChild.keys[t - 1] = null;
+        keys.insertAt(i, leftChild.keys.get(t - 1));
+        children.insertAt(i + 1, newRightChild);
+        leftChild.keys.set(t - 1, null);
 
         n++;
         leftChild.n = leftChild.minKeys();
@@ -174,7 +182,7 @@ public class BTreeNode {
             // look for the right place for the new key and make room for it
             // while we go
             i = rightShiftKeysBiggerThan(password);
-            keys[i + 1] = password;
+            keys.set(i + 1, password);
             n++;
         } // if
         else {
@@ -182,13 +190,14 @@ public class BTreeNode {
             i = localSearch(password).index();
 
             // we need to split the child it is full
-            if (children[i].isFull()) {
+            if (children.get(i).isFull()) {
                 splitChild(i);
-                if (compare(password, keys[i]) > 0) {
+                if (compareWithKetAt(password, i) > 0) {
                     i++;
                 }
             }
-            children[i].insertNonFull(password);
+
+            children.get(i).insertNonFull(password);
         }
     }
 
@@ -199,8 +208,8 @@ public class BTreeNode {
      */
     private int rightShiftKeysBiggerThan(String password) {
         int i;
-        for (i = n - 1; i >= 0 && compare(password, keys[i]) < 0; i--) {
-            keys[i + 1] = keys[i];
+        for (i = size() - 1; i >= 0 && compareWithKetAt(password, i) < 0; i--) {
+            keys.set(i + 1, keys.get(i));
         }
 
         return i;
@@ -214,17 +223,17 @@ public class BTreeNode {
     }
 
     private void takeChildrenFrom(BTreeNode from, int fromStartIndex, int thisStartIndex, int count) {
-        Utils.takeItems(from.children, fromStartIndex, children, thisStartIndex, count);
+        children.takeItemsFrom(thisStartIndex, from.children, fromStartIndex, count);
     }
 
     private void takeKeysFrom(BTreeNode from, int fromStartIndex, int thisStartIndex, int count) {
-        Utils.takeItems(from.keys, fromStartIndex, keys, thisStartIndex, count);
+        keys.takeItemsFrom(thisStartIndex, from.keys, fromStartIndex, count);
     }
 
     void deleteNotMinimumKeys(String password) {
         FoundIndexPair searchResult = localSearch(password);
         int i = searchResult.index();
-        if (keyIsInThisNode(searchResult)) {
+        if (searchResult.found()) {
             deleteNotMinimumKeysInThis(password, i);
         }
         // password < keys[i] | i == n
@@ -235,8 +244,8 @@ public class BTreeNode {
     }
 
     private void deleteNotMinimumKeysInThis(String password, int i) {
-        BTreeNode leftChild = children[i];
-        BTreeNode rightChild = children[i + 1];
+        BTreeNode leftChild = children.get(i);
+        BTreeNode rightChild = children.get(i + 1);
 
         // case 1
         if (leaf) {
@@ -258,53 +267,53 @@ public class BTreeNode {
     }
 
     private void deleteNotMinimumKeysInChild(String password, int i) {
-        BTreeNode leftChild = children[i];
-        if (leftChild.needsKey()) {
+        BTreeNode child = children.get(i);
+        if (child.needsKey()) {
             // shift with left sibling
-            if (i > 0 && !children[i - 1].needsKey()) {
+            if (i > 0 && !children.get(i - 1).needsKey()) {
                 shiftRight(i);
             }
             // shift with right sibling
-            else if (i < n && !children[i + 1].needsKey()) {
+            else if (i < size() && !children.get(i + 1).needsKey()) {
                 shiftLeft(i);
             }
             // merge with left sibling
             else if (i > 0) {
-                leftChild = merge(i - 1);
+                child = merge(i - 1);
             }
             // merge with right sibling
             else {
-                leftChild = merge(i);
+                child = merge(i);
             }
         }
 
-        leftChild.deleteNotMinimumKeys(password);
+        child.deleteNotMinimumKeys(password);
     }
 
     private void deleteFromLeaf(int i) {
-        Utils.remove(keys, i, n - 1);
+        keys.removeAt(i);
         n--;
     }
 
     private void replaceWithPredecessorAndDeleteItRecursively(int i) {
         NodeIndexPair nodeIndexPair = findPredecessor(i);
-        String predecessor = nodeIndexPair.node().keys[nodeIndexPair.index()];
-        children[i].deleteNotMinimumKeys(predecessor);
-        keys[i] = predecessor;
+        String predecessor = nodeIndexPair.node().keys.get(nodeIndexPair.index());
+        children.get(i).deleteNotMinimumKeys(predecessor);
+        keys.set(i, predecessor);
     }
 
     private void replaceWithSuccessorAndDeleteItRecursively(int i) {
         NodeIndexPair nodeIndexPair = findSuccessor(i);
-        String successor = nodeIndexPair.node().keys[nodeIndexPair.index()];
-        children[i + 1].deleteNotMinimumKeys(successor);
-        keys[i] = successor;
+        String successor = nodeIndexPair.node().keys.get(nodeIndexPair.index());
+        children.get(i + 1).deleteNotMinimumKeys(successor);
+        keys.set(i, successor);
     }
 
     BTreeNode merge(int i) {
-        BTreeNode leftChild = children[i];
+        BTreeNode leftChild = children.get(i);
 
-        leftChild.keys[t - 1] = Utils.remove(keys, i, n - 1);
-        BTreeNode rightChild = Utils.remove(children, i + 1, n - 1);
+        leftChild.keys.set(t - 1, keys.removeAt(i));
+        BTreeNode rightChild = children.removeAt(i + 1);
         leftChild.takeKeysFrom(rightChild, 0, t, t - 1);
         if (!leftChild.leaf) {
             leftChild.takeChildrenFrom(rightChild, 0, t, t);
@@ -316,38 +325,37 @@ public class BTreeNode {
     }
 
     private void shiftRight(int i) {
-        BTreeNode leftChild = children[i];
-        BTreeNode leftSibling = children[i - 1];
+        BTreeNode child = children.get(i);
+        BTreeNode leftSibling = children.get(i - 1);
 
-        Utils.insert(leftChild.keys, keys[i - 1], 0, leftChild.n - 1);
-        keys[i - 1] = Utils.remove(leftSibling.keys, leftSibling.n - 1, leftSibling.n - 1);
-        if (!leftChild.leaf) {
-            BTreeNode child = Utils.remove(leftSibling.children, leftSibling.n, leftSibling.n);
-            Utils.insert(leftChild.children, child, 0, leftChild.n);
+        child.keys.insertAt(0, keys.get(i - 1));
+        keys.set(i - 1, leftSibling.keys.removeLast());
+        if (!child.leaf) {
+            BTreeNode transferedChild = leftSibling.children.removeLast();
+            child.children.insertAt(0, transferedChild);
         }
 
-        leftChild.n++;
+        child.n++;
         leftSibling.n--;
     }
 
     private void shiftLeft(int i) {
-        BTreeNode leftChild = children[i];
-        BTreeNode rightSibling = children[i + 1];
+        BTreeNode child = children.get(i);
+        BTreeNode rightSibling = children.get(i + 1);
 
-        Utils.insert(leftChild.keys, keys[i], leftChild.n, leftChild.n - 1);
-        keys[i] = Utils.remove(rightSibling.keys, 0, rightSibling.n - 1);
-
-        if (!leftChild.leaf) {
-            BTreeNode child = Utils.remove(rightSibling.children, 0, rightSibling.n);
-            Utils.insert(leftChild.children, child, leftChild.n + 1, leftChild.n);
+        child.keys.insertLast(keys.get(i));
+        keys.set(i, rightSibling.keys.removeAt(0));
+        if (!child.leaf) {
+            BTreeNode transferedChild = rightSibling.children.removeAt(0);
+            child.children.insertLast(transferedChild);
         }
 
-        leftChild.n++;
+        child.n++;
         rightSibling.n--;
     }
 
-    private boolean keyIsInThisNode(FoundIndexPair localSearchResult) {
-        return localSearchResult.found();
+    private int compareWithKetAt(String password, int i) {
+        return compare(password, keys.get(i));
     }
 
     // if password1 > password2 we return positive number
@@ -362,27 +370,27 @@ public class BTreeNode {
 
         if (leaf) {
             s += keyString(0, depth);
-            for (int i = 1; i < n; i++) {
+            for (int i = 1; i < size(); i++) {
                 s += "," + keyString(i, depth);
             } // for
         }
         else {
             s += childAndKeyString(0, depth);
-            for (int i = 1; i < n; i++) {
+            for (int i = 1; i < size(); i++) {
                 s += "," + childAndKeyString(i, depth);
             } // for
-            s += "," + childString(n, depth);
+            s += "," + childString(size(), depth);
         }
 
         return s;
     }
 
     private String keyString(int i, int depth) {
-        return keys[i] + "_"  + depth;
+        return keys.get(i) + "_"  + depth;
     }
 
     private String childString(int i, int depth) {
-        return children[i].toString(depth + 1);
+        return children.get(i).toString(depth + 1);
     }
 
     private String childAndKeyString(int i, int depth) {

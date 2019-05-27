@@ -22,31 +22,11 @@ public class BTree {
         rootDelete(password.toLowerCase());
     }
 
-    @Override
-    public String toString() {
-        return root.toString();
-    }
-
-    public void createFullTree(String filePath) {
-        Utils.iterateFileLines(filePath, password -> this.insert(password));
-    }
-
-    public String getSearchTime(String filePath) {
-        long startNanoTime = System.nanoTime();
-        Utils.iterateFileLines(filePath, password -> this.search(password));
-        long endNanoTime = System.nanoTime();
-        return Utils.formatMillisecondsDiff(startNanoTime, endNanoTime);
-    }
-
-    public void deleteKeysFromTree(String filePath) {
-        Utils.iterateFileLines(filePath, password -> this.delete(password));
-    }
-
     /**
      * Inserts the key, should be called on the root only
-     * @param password The key to insertAt
+     * @param password The key to insert
      */
-     private void rootInsert(String password) {
+    private void rootInsert(String password) {
         // if the root is full, we need to split it and make a new root
         if (root.isFull()) {
             // make a new root node
@@ -58,10 +38,15 @@ public class BTree {
             root = newRoot;
         }
 
-         // find the right leaf and insertAt there
-         root.insertNonFull(password);
+        // find the right leaf and insertAt there
+        root.insertNonFull(password);
     }
 
+
+    /**
+     * Deletes the key, should be called on the root only
+     * @param password The key to delete
+     */
     private void rootDelete(String password) {
         if (root.needsKey() & root.children.get(0).needsKey() & root.children.get(1).needsKey()) {
             BTreeNode newRoot = root.merge(0);
@@ -70,5 +55,32 @@ public class BTree {
         }
 
         root.deleteNotMinimumKeys(password);
+    }
+
+    @Override
+    public String toString() {
+        return root.toString();
+    }
+
+    public void createFullTree(String filePath) {
+        Utils.iterateFileLines(filePath, password -> this.insert(password));
+    }
+
+    public String getSearchTime(String filePath) {
+        long time = 0;
+        try (FileLinesIterator linesIterator = new FileLinesIterator(filePath)) {
+            for (String password : linesIterator) {
+                long startNanoTime = System.nanoTime();
+                this.search(password);
+                long endNanoTime = System.nanoTime();
+                time += endNanoTime - startNanoTime;
+            }
+        }
+
+        return Utils.formatMillisecondsDiff(time);
+    }
+
+    public void deleteKeysFromTree(String filePath) {
+        Utils.iterateFileLines(filePath, password -> this.delete(password));
     }
 }

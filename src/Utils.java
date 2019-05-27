@@ -83,8 +83,11 @@ public class Utils {
 	}
 
 	public static String formatMillisecondsDiff(long startNanoTime, long endNanoTime) {
-    	long diff = endNanoTime - startNanoTime;
-    	double milliseconds = (double)diff / NANO_SEC_TO_MS;
+		return formatMillisecondsDiff(endNanoTime - startNanoTime);
+	}
+
+	public static String formatMillisecondsDiff(long diff) {
+		double milliseconds = (double)diff / NANO_SEC_TO_MS;
 		DecimalFormat format = new DecimalFormat("#.####");
 		return format.format(milliseconds);
 	}

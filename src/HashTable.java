@@ -55,9 +55,16 @@ public class HashTable {
 	}
 
 	public String getSearchTime(String filePath) {
-		long startNanoTime = System.nanoTime();
-		Utils.iterateFileLines(filePath, password -> this.contains(password));
-		long endNanoTime = System.nanoTime();
-		return Utils.formatMillisecondsDiff(startNanoTime, endNanoTime);
+		long time = 0;
+		try (FileLinesIterator linesIterator = new FileLinesIterator(filePath)) {
+			for (String password : linesIterator) {
+				long startNanoTime = System.nanoTime();
+				this.contains(password);
+				long endNanoTime = System.nanoTime();
+				time += endNanoTime - startNanoTime;
+			}
+		}
+
+		return Utils.formatMillisecondsDiff(time);
 	}
 }

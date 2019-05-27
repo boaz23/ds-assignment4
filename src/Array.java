@@ -36,16 +36,28 @@ public class Array<T> {
     }
 
     /**
+     * Takes items from the other array starting at the given start index
+     * until the end of the other array and puts them into this array
+     * starting from the end.
+     * The other array items are set to null.
+     * @param other The other array to take items from
+     * @param startIndex The index in the other array to start taking items from
+     */
+    public void takeItemsFrom(Array<T> other, int startIndex) {
+        takeItemsFrom(size(), other, startIndex, other.size() - startIndex);
+    }
+
+    /**
      * Takes items from the source array and puts them into this array
-     * (the source array items are set to null)
-     * @param startIndex The index in this array to start placing items in
+     * The source array items are set to null.
+     * @param insertionStartIndex The index in this array to start placing items in
      * @param source The source array to take items from
      * @param sourceStartIndex The index in the source array to start taking items from
      * @param count The amount of items to take
      */
-    public void takeItemsFrom(int startIndex, Array<T> source, int sourceStartIndex, int count) {
+    public void takeItemsFrom(int insertionStartIndex, Array<T> source, int sourceStartIndex, int count) {
         for (int i = 0; i < count; i++) {
-            set(startIndex + i, source.get(sourceStartIndex + i));
+            set(insertionStartIndex + i, source.get(sourceStartIndex + i));
             source.set(sourceStartIndex + i, null);
         }
 
@@ -81,7 +93,7 @@ public class Array<T> {
      * @param item The item to insertAt
      */
     public void insertAt(int insertIndex, T item) {
-        rightShift(insertIndex, size() - 1);
+        rightShift(insertIndex, lastIndex());
         set(insertIndex, item);
         size++;
     }
@@ -93,14 +105,46 @@ public class Array<T> {
      */
     public T removeAt(int removeIndex) {
         T item = get(removeIndex);
-        leftShift(removeIndex + 1, size() - 1);
-        set(size() - 1, null);
+        leftShift(removeIndex + 1, lastIndex());
+        set(lastIndex(), null);
         size--;
         return item;
     }
 
+    public int firstIndex() {
+        return 0;
+    }
+
+    public int lastIndex() {
+        return size() - 1;
+    }
+
+    public boolean hasRight(int i) {
+        return i < lastIndex();
+    }
+
+    public boolean hasLeft(int i) {
+        return i > firstIndex();
+    }
+
+    public T getFirst() {
+        return get(firstIndex());
+    }
+
+    public T getLast() {
+        return get(lastIndex());
+    }
+
+    public void setFirst(T item) {
+        set(firstIndex(), item);
+    }
+
+    public void setLast(T item) {
+        set(lastIndex(), item);
+    }
+
     public void insertFirst(T item) {
-        insertAt(0, item);
+        insertAt(firstIndex(), item);
     }
 
     public void insertLast(T item) {
@@ -108,10 +152,10 @@ public class Array<T> {
     }
 
     public T removeFirst() {
-        return removeAt(0);
+        return removeAt(firstIndex());
     }
 
     public T removeLast() {
-        return removeAt(size() - 1);
+        return removeAt(lastIndex());
     }
 }

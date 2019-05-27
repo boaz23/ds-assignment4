@@ -58,7 +58,7 @@ public class BTreeNode {
     public NodeIndexPair findSuccessor(int i) {
         NodeIndexPair nodeIndexPair;
         if (leaf) {
-            if (i < size() - 1) {
+            if (keys.hasRight(i)) {
                 nodeIndexPair = new NodeIndexPair(this, i + 1);
             }
             else {
@@ -75,7 +75,7 @@ public class BTreeNode {
     public NodeIndexPair findPredecessor(int i) {
         NodeIndexPair nodeIndexPair;
         if (leaf) {
-            if (i > 0) {
+            if (keys.hasLeft(i)) {
                 nodeIndexPair = new NodeIndexPair(this, i - 1);
             }
             else {
@@ -97,10 +97,10 @@ public class BTreeNode {
         else {
             BTreeNode node = this;
             while (!node.leaf) {
-                node = node.children.get(0);
+                node = node.children.getFirst();
             }
 
-            nodeIndexPair = new NodeIndexPair(node, 0);
+            nodeIndexPair = new NodeIndexPair(node, node.keys.firstIndex());
         }
 
         return nodeIndexPair;
@@ -114,10 +114,10 @@ public class BTreeNode {
         else {
             BTreeNode node = this;
             while (!node.leaf) {
-                node = node.children.get(node.size());
+                node = node.children.getLast();
             }
 
-            nodeIndexPair = new NodeIndexPair(node, node.size() - 1);
+            nodeIndexPair = new NodeIndexPair(node, node.keys.lastIndex());
         }
 
         return nodeIndexPair;
@@ -139,7 +139,7 @@ public class BTreeNode {
         int compareResult = 0;
 
         // find the first index such that the key is smaller than the key in that index
-        while (i < size() && (compareResult = compareWithKetAt(password, i)) > 0)
+        while (i < size() && (compareResult = compareWithKeyAt(password, i)) > 0)
             i++;
 
         // if we're still in bounds of this node the last compare
@@ -156,24 +156,27 @@ public class BTreeNode {
     }
 
     void splitChild(int i) {
-        BTreeNode leftChild = children.get(i);
-        BTreeNode newRightChild = leftChild.createNewSplitNode();
+        BTreeNode child = children.get(i);
+        BTreeNode splitChild = child.createNewSplitNode();
 
         // take the keys t+1,...,2t-1 from the child we're splitting
         // and put them as the keys 1,...,t respectively in the new node.
-        newRightChild.takeKeysFrom(leftChild, t,0, t - 1);
-        if (!leftChild.leaf) {
+        splitChild.takeKeysFrom(child, t);
+        if (!child.leaf) {
             // take the children t+1,...,2t from the child we're splitting
-            // and put them as the children 1,...,t in the new node.
-            newRightChild.takeChildrenFrom(leftChild, t,0, t);
+            // and put them as the children 1,...,t respectively in the new node.
+            splitChild.takeChildrenFrom(child, t);
         }
 
-        keys.insertAt(i, leftChild.keys.get(t - 1));
-        children.insertAt(i + 1, newRightChild);
-        leftChild.keys.set(t - 1, null);
+        // take the middle key of the child and insert it right in between
+        // the child and new child
+        keys.insertAt(i, child.keys.removeLast());
+
+        // insert the new node as a child after the child we split
+        children.insertAt(i + 1, splitChild);
 
         n++;
-        leftChild.n = leftChild.minKeys();
+        child.n = child.minKeys();
     }
 
     void insertNonFull(String password) {
@@ -184,6 +187,7 @@ public class BTreeNode {
             i = rightShiftKeysBiggerThan(password);
             keys.set(i + 1, password);
             n++;
+            keys.setSize(n);
         } // if
         else {
             // find the child which the key should go into
@@ -192,7 +196,7 @@ public class BTreeNode {
             // we need to split the child it is full
             if (children.get(i).isFull()) {
                 splitChild(i);
-                if (compareWithKetAt(password, i) > 0) {
+                if (compareWithKeyAt(password, i) > 0) {
                     i++;
                 }
             }
@@ -208,7 +212,7 @@ public class BTreeNode {
      */
     private int rightShiftKeysBiggerThan(String password) {
         int i;
-        for (i = size() - 1; i >= 0 && compareWithKetAt(password, i) < 0; i--) {
+        for (i = keys.lastIndex(); i >= 0 && compareWithKeyAt(password, i) < 0; i--) {
             keys.set(i + 1, keys.get(i));
         }
 
@@ -222,12 +226,24 @@ public class BTreeNode {
         return splitNode;
     }
 
-    private void takeChildrenFrom(BTreeNode from, int fromStartIndex, int thisStartIndex, int count) {
-        children.takeItemsFrom(thisStartIndex, from.children, fromStartIndex, count);
+    /**
+     * Takes keys from the given node and places them at the end one after the other.
+     * The other node keys are set to null.
+     * @param from The node to take keys from
+     * @param startIndex The starting index in given node which keys should be taken from
+     */
+    private void takeKeysFrom(BTreeNode from, int startIndex) {
+        keys.takeItemsFrom(from.keys, startIndex);
     }
 
-    private void takeKeysFrom(BTreeNode from, int fromStartIndex, int thisStartIndex, int count) {
-        keys.takeItemsFrom(thisStartIndex, from.keys, fromStartIndex, count);
+    /**
+     * Takes children from the given node and places them at the end one after the other.
+     * The other node keys are set to null.
+     * @param from The node to take children from
+     * @param startIndex The starting index in given node which children should be taken from
+     */
+    private void takeChildrenFrom(BTreeNode from, int startIndex) {
+        children.takeItemsFrom(from.children, startIndex);
     }
 
     void deleteNotMinimumKeys(String password) {
@@ -270,15 +286,15 @@ public class BTreeNode {
         BTreeNode child = children.get(i);
         if (child.needsKey()) {
             // shift with left sibling
-            if (i > 0 && !children.get(i - 1).needsKey()) {
+            if (children.hasLeft(i) && !children.get(i - 1).needsKey()) {
                 shiftRight(i);
             }
             // shift with right sibling
-            else if (i < size() && !children.get(i + 1).needsKey()) {
+            else if (children.hasRight(i) && !children.get(i + 1).needsKey()) {
                 shiftLeft(i);
             }
             // merge with left sibling
-            else if (i > 0) {
+            else if (children.hasLeft(i)) {
                 child = merge(i - 1);
             }
             // merge with right sibling
@@ -312,11 +328,20 @@ public class BTreeNode {
     BTreeNode merge(int i) {
         BTreeNode leftChild = children.get(i);
 
-        leftChild.keys.set(t - 1, keys.removeAt(i));
+        // take the key "separating" both children and insert it
+        // to the left child as the last key.
+        leftChild.keys.insertLast(keys.removeAt(i));
+
+        // remove the right child, as it will be merged into the left child
         BTreeNode rightChild = children.removeAt(i + 1);
-        leftChild.takeKeysFrom(rightChild, 0, t, t - 1);
+
+        // take the keys 1,...,t-1 from the right child
+        // and put them as the keys t+1,...,2t-1 respectively in the left child.
+        leftChild.takeKeysFrom(rightChild, 0);
         if (!leftChild.leaf) {
-            leftChild.takeChildrenFrom(rightChild, 0, t, t);
+            // take the children 1,...,t from the right child
+            // and put them as the children t+1,...,2t respectively in the left child.
+            leftChild.takeChildrenFrom(rightChild, 0);
         }
 
         n--;
@@ -328,11 +353,18 @@ public class BTreeNode {
         BTreeNode child = children.get(i);
         BTreeNode leftSibling = children.get(i - 1);
 
+        // take the key that "separates" both children and insert it
+        // to the child as the first key
         child.keys.insertAt(0, keys.get(i - 1));
+
+        // take the last key of the left sibling and replace the key
+        // we took earlier from this node
         keys.set(i - 1, leftSibling.keys.removeLast());
         if (!child.leaf) {
-            BTreeNode transferedChild = leftSibling.children.removeLast();
-            child.children.insertAt(0, transferedChild);
+            // take the last child of the left sibling and insert it
+            // to the child as the first child
+            BTreeNode transferredChild = leftSibling.children.removeLast();
+            child.children.insertAt(0, transferredChild);
         }
 
         child.n++;
@@ -343,18 +375,25 @@ public class BTreeNode {
         BTreeNode child = children.get(i);
         BTreeNode rightSibling = children.get(i + 1);
 
+        // take the key that "separates" both children and insert it
+        // to the child as the last key
         child.keys.insertLast(keys.get(i));
+
+        // take the first key of the right sibling and replace the key
+        // we took earlier from this node
         keys.set(i, rightSibling.keys.removeAt(0));
         if (!child.leaf) {
-            BTreeNode transferedChild = rightSibling.children.removeAt(0);
-            child.children.insertLast(transferedChild);
+            // take the first child of the right sibling and insert it
+            // to the child as the last child
+            BTreeNode transferredChild = rightSibling.children.removeAt(0);
+            child.children.insertLast(transferredChild);
         }
 
         child.n++;
         rightSibling.n--;
     }
 
-    private int compareWithKetAt(String password, int i) {
+    private int compareWithKeyAt(String password, int i) {
         return compare(password, keys.get(i));
     }
 

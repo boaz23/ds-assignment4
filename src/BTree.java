@@ -52,7 +52,7 @@ public class BTree {
             // make a new root node
             BTreeNode newRoot = root.createRootNode();
             root.root = false;
-            newRoot.children.set(0, root);
+            newRoot.children.insertFirst(root);
 
             newRoot.splitChild(0);
             root = newRoot;

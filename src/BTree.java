@@ -67,18 +67,7 @@ public class BTree {
     }
 
     public String getSearchTime(String filePath) {
-        String sTime;
-        try (FileLinesIterator linesIterator = new FileLinesIterator(filePath)) {
-            long startNanoTime = System.nanoTime();
-            for (String password : linesIterator) {
-                this.search(password);
-            }
-
-            long endNanoTime = System.nanoTime();
-            sTime = Utils.formatMillisecondsDiff(startNanoTime, endNanoTime);
-        }
-
-        return sTime;
+        return Utils.getSearchTime(filePath, password -> search(password));
     }
 
     public void deleteKeysFromTree(String filePath) {

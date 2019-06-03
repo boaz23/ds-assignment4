@@ -2,17 +2,17 @@ import java.io.*;
 import java.text.DecimalFormat;
 import java.util.function.Consumer;
 
-public class Utils {
-    public static final int p = 15486907;
-    public static final int BYTE_BASE = 256;
-    public static final long NANO_SEC_TO_MS = 1000000;
+class Utils {
+    static final int p = 15486907;
+    private static final int BYTE_BASE = 256;
+    private static final long NANO_SEC_TO_MS = 1000000;
 
     /**
      * Hash the given string to a integer using horner's rule
      * on the bytes composing the string
      * @param password The password
      */
-    public static int hornerPassword(String password) {
+    static int hornerPassword(String password) {
         if (password == null) {
             throw new RuntimeException("password is null.");
         }
@@ -27,7 +27,7 @@ public class Utils {
      * We then apply horner's rule for p.
      * @return The 'polynomial' (represented by the byte array) modulo p when x=256
      */
-    public static int hornerPassword(byte[] bytes) {
+    private static int hornerPassword(byte[] bytes) {
         if (bytes == null) {
             throw new RuntimeException("bytes is null.");
         }
@@ -47,16 +47,25 @@ public class Utils {
         return (int)horner;
     }
 
-    public static <T> T consumeFileReader(String filePath, FileReaderConsumer<T> fileReaderAction) {
+    /**
+     * Perform an action on file reader of the file at the specified path.
+     * The function rethrows any IO exception as wrapping RuntimeException
+     * and closes before exiting.
+     * @param filePath The path to file
+     * @param action The action on the file reader
+     * @param <T> The type returned from the action
+     * @return The value returned from the action
+     */
+    static <T> T consumeFileReader(String filePath, FileReaderConsumer<T> action) {
         checkFilePath(filePath);
-        if (fileReaderAction == null) {
+        if (action == null) {
             throw new RuntimeException("file reader action is null.");
         }
 
         BufferedReader reader = null;
         try {
             reader = new BufferedReader(new FileReader(filePath));
-            return fileReaderAction.accept(reader);
+            return action.accept(reader);
         }
         catch (FileNotFoundException e) {
             throw new RuntimeException("file not found", e);
@@ -69,13 +78,13 @@ public class Utils {
         }
     }
 
-    public static void checkFilePath(String filePath) {
+    private static void checkFilePath(String filePath) {
         if (filePath == null || filePath.equals("")) {
             throw new RuntimeException("filePath is null or empty.");
         }
     }
 
-    public static void closeReader(BufferedReader reader) {
+    private static void closeReader(BufferedReader reader) {
         if (reader != null) {
             try {
                 reader.close();
@@ -86,7 +95,12 @@ public class Utils {
         }
     }
 
-    public static void iterateFileLines(String filePath, final Consumer<String> action) {
+    /**
+     * Perform an operation on each line of the file at the specified path
+     * @param filePath The file path
+     * @param action The action to perform on each line
+     */
+    static void iterateFileLines(String filePath, final Consumer<String> action) {
         if (action == null) {
             throw new RuntimeException("action is null.");
         }
@@ -97,7 +111,15 @@ public class Utils {
         });
     }
 
-    public static String getSearchTime(String filePath, final Consumer<String> search) {
+    /**
+     * Calculates and formats the time it takes to search all the
+     * keys which are specified in the file at the given path
+     * @param filePath The path to the file containing the keys as lines
+     * @param search The search function of the data structure to perform
+     * @return The formatted amount of time in milliseconds it took for entire search operation
+     * (as a whole)
+     */
+    static String getSearchTime(String filePath, final Consumer<String> search) {
         if (search == null) {
             throw new RuntimeException("search is null.");
         }
@@ -105,16 +127,34 @@ public class Utils {
         return consumeFileReader(filePath, reader -> getSearchTimeCore(reader, search));
     }
 
-    public static String formatMillisecondsDiff(long startNanoTime, long endNanoTime) {
+    /**
+     * Formats the nano time difference to milliseconds
+     * @param startNanoTime The start time (in nanoseconds)
+     * @param endNanoTime The end time (in nanoseconds)
+     * @return The formatted time difference in milliseconds
+     */
+    static String formatMillisecondsDiff(long startNanoTime, long endNanoTime) {
         return formatMillisecondsDiff(endNanoTime - startNanoTime);
     }
 
-    public static String formatMillisecondsDiff(long diff) {
+    /**
+     * Formats nanoseconds to milliseconds
+     * @param diff The nanoseconds value
+     */
+    static String formatMillisecondsDiff(long diff) {
         double milliseconds = (double)diff / NANO_SEC_TO_MS;
         DecimalFormat format = new DecimalFormat("#.####");
         return format.format(milliseconds);
     }
 
+    /**
+     * Calculates and formats the time it takes to search all the
+     * keys which are specified in the file
+     * @param reader The reader of the file containing the keys as lines
+     * @param search The search function of the data structure to perform
+     * @return The formatted amount of time in milliseconds it took for entire search operation
+     * (as a whole)
+     */
     private static String getSearchTimeCore(BufferedReader reader, Consumer<String> search) throws IOException {
         String password;
         long startNanoTime = System.nanoTime();

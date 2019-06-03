@@ -1,6 +1,6 @@
 import java.util.Iterator;
 
-public class LinkedList<E> implements Iterable<E> {
+class LinkedList<E> implements Iterable<E> {
     private Link<E> head;
     private Link<E> tail;
 

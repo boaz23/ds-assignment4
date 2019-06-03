@@ -1,4 +1,4 @@
-public class Link<E> {
+class Link<E> {
     private E data;
     private Link<E> next;
 

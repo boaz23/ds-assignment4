@@ -2,10 +2,10 @@
  * A hash function which is used by BloomFilter
  *
  */
-public class HashFunctionImpl implements HashFunction {
-	public final int alpha;
-	public final int beta;
-	public final int m1;
+class HashFunctionImpl implements HashFunction {
+	private final int alpha;
+	private final int beta;
+	private final int m1;
 	
 	public HashFunctionImpl(int a, int b, int m1) {
 		this.alpha = a;

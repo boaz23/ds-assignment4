@@ -6,6 +6,11 @@ public class BloomFilter {
     private BitArray bitArray;
     private LinkedList<HashFunction> hashFunctions;
 
+    /**
+     * Initializes a new bloom filter
+     * @param m1 The size of the bloom filter in bits
+     * @param filePath The file path to read hash functions from
+     */
     public BloomFilter(String m1, String filePath) {
         if (filePath == null || filePath.equals("")) {
             throw new RuntimeException("hashFunctionsFilePath is null or empty.");
@@ -25,6 +30,11 @@ public class BloomFilter {
         Utils.iterateFileLines(filePath, password -> this.parseHashFunctionLine(password));
     }
 
+    /**
+     * Parses a hash function line and adds the hash function to the
+     * hash functions list
+     * @param line The line to parse
+     */
     private void parseHashFunctionLine(String line) {
         try {
             String[] hashFunctionParams = line.split("_");
@@ -70,7 +80,7 @@ public class BloomFilter {
      * Returns whether the key (converted number of a password) is in our bad password bloom filter.
      * @param key The key
      */
-    public boolean contains(int key) {
+    private boolean contains(int key) {
         boolean contains = true;
         for (HashFunction hashFunction : this.hashFunctions) {
             int index = hashFunction.hash(key);
@@ -94,6 +104,10 @@ public class BloomFilter {
         return Utils.consumeFileReader(filePath, reader -> getRejectedPasswordsAmount(reader)).toString();
     }
 
+    /**
+     * Returns the amount of passwords rejected by this bloom filter
+     * @param reader The reader of the file
+     */
     private int getRejectedPasswordsAmount(BufferedReader reader) throws IOException {
         int badPasswords = 0;
 
@@ -107,6 +121,11 @@ public class BloomFilter {
         return badPasswords;
     }
 
+    /**
+     * Returns the amount false positive (passwords that are ok but are still rejected by the bloom filter)
+     * @param hashtable The hashtable that contains the bad passwords
+     * @param reader The file reader
+     */
     private String getFalsePositivePercentage(HashTable hashtable, BufferedReader reader) throws IOException {
         int falsePositive = 0;
         int goodPasswords = 0;

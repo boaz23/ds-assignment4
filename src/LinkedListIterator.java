@@ -1,7 +1,7 @@
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-public class LinkedListIterator<E> implements Iterator<E> {
+class LinkedListIterator<E> implements Iterator<E> {
     private Link<E> current;
 
     public LinkedListIterator(Link<E> start) {

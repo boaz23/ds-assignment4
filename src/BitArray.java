@@ -25,10 +25,18 @@ public class BitArray {
         this.length = length;
     }
 
+    /**
+     * Returns the length of the array, the amount of bits
+     */
     public int length() {
         return length;
     }
 
+    /**
+     * Sets the bit at the given index.
+     * @param index The index
+     * @param value The new value of the bit
+     */
     public void set(int index, boolean value) {
         validateIndex(index);
 
@@ -46,6 +54,10 @@ public class BitArray {
         this.bits[bitIndices.itemIndex] = (byte)itemValue;
     }
 
+    /**
+     * Returns whether the bit at the given index is 1 or 0.
+     * @param index The bit index
+     */
     public boolean get(int index) {
         validateIndex(index);
 
@@ -78,42 +90,45 @@ public class BitArray {
 
     @Override
     public String toString() {
-        String s = "";
+        StringBuilder sb = new StringBuilder();
         if (this.length() > 0) {
-            s += getString(this.bits[0]);
+            appendString(sb, this.bits[0]);
             for (int i = 1; i < this.bits.length; i++) {
-                s += " ";
-                s += getString(this.bits[i]);
+                sb.append(" ");
+                appendString(sb, this.bits[i]);
             }
         }
 
-        return s;
+        return sb.toString();
     }
 
     /**
-     * Converts a byte to a binary string
+     * Appends a byte to as binary string to a string builder
+     * @param sb The string builder to append the binary string to
      * @param item A byte
-     * @return A string representing the byte in binary base
      */
-    private String getString(byte item) {
-        String s = "";
-
+    private void appendString(StringBuilder sb, byte item) {
         // start from the last bit of the byte
         byte bitFilter = (byte)(1 << (BITS_PER_ITEM - 1));
         for (int i = 0; i < BITS_PER_ITEM; i++) {
-            s += this.get(item, bitFilter) ? "1" : "0";
+            sb.append(this.get(item, bitFilter) ? "1" : "0");
 
-            // Java byte's conversion to int keeps the value.
-            // that means instead of padding it with 0's,
-            // it pads it with 1's if the byte's value is negative.
+            // Before doing the bit shift, java convert's the byte to an int,
+            // but, java byte's conversion to int keeps the value.
+            // That means instead of padding it with 0's,
+            // it pads it with 1's if the byte's value is negative
+            // (which is the case when the bit filter is initialized,
+            // as it is initialized to -128).
+            // It does this in order to preserve the negative value.
             // That means that 9th bit in the resulting int will be 1
             // and therefore after shifting by 1 (whether signed or unsigned),
             // the 8th bit will be 1. We want the exact opposite, we want the 8th
             // bit to be 0.
+            // So we "trick" this by casting to int ourselves and then just zeroing
+            // out every bit which is not our byte bits (the first 8 bits, 0xff = 11111111).
+            // Only then, we can actually perform the right shift.
             bitFilter = (byte)((((int)bitFilter) & 0xff) >>> 1);
         }
-
-        return s;
     }
 
     /**
@@ -126,18 +141,15 @@ public class BitArray {
         private final int itemIndex;
 
         /**
-         * The index of the bit in the byte itself
-         */
-        private final int bitIndex;
-
-        /**
          * The byte value used to single out the bit we care about in the byte
          */
         private final byte bitFilter;
 
         private BitIndices(int index) {
             itemIndex = getItemIndex(index);
-            bitIndex = index % BITS_PER_ITEM;
+
+             //The index of the bit in the byte itself
+            int bitIndex = index % BITS_PER_ITEM;
 
             // take 00000001 and left shift it by 'bitIndex'
             bitFilter = (byte)(1 << bitIndex);

@@ -1,9 +1,9 @@
 public class BTreeNode {
-    Array<String> keys;
-    Array<BTreeNode> children;
-    int t;
-    int n;
-    boolean leaf;
+    private final Array<String> keys;
+    final Array<BTreeNode> children;
+    private final int t;
+    private int n;
+    private boolean leaf;
     boolean root;
 
     BTreeNode(int t, boolean root) {
@@ -15,31 +15,58 @@ public class BTreeNode {
         children = new Array<>(new BTreeNode[keys.capacity() + 1]);
     }
 
-    BTreeNode(int t) {
+    private BTreeNode(int t) {
         this(t,false);
     }
 
+    /**
+     * Returns the minimum amount of keys this node can hold
+     */
     private int minKeys() {
         return root ? 1 : t - 1;
     }
+
+    /**
+     * Returns the maximum amount of keys this node can hold
+     */
     private int maxKeys() {
         return keys.capacity();
     }
 
+    /**
+     * Returns the size of this node,
+     * which is the amount of keys this node holds
+     * and also the amount of children this node has minus 1 (if it's not a leaf)
+     */
     public int size() {
         return n;
     }
 
+    /**
+     * Returns whether this node isn't holding any keys
+     */
     public boolean isEmpty() {
         return size() == 0;
     }
+
+    /**
+     * Returns whether this node holds the maximum allowed keys
+     */
     public boolean isFull() {
         return size() == maxKeys();
     }
+
+    /**
+     * Returns whether this node holds the minimum allowed keys
+     */
     public boolean needsKey() {
         return size() == minKeys();
     }
 
+    /**
+     * Searches this node for the specified password
+     * @param password The password to look for
+     */
     public NodeIndexPair search(String password) {
         FoundIndexPair searchResult = localSearch(password);
         if (searchResult.found()) {
@@ -55,6 +82,10 @@ public class BTreeNode {
         }
     }
 
+    /**
+     * Finds the successor of the key at the specified index
+     * @param i The index
+     */
     public NodeIndexPair findSuccessor(int i) {
         NodeIndexPair nodeIndexPair;
         if (leaf) {
@@ -72,6 +103,10 @@ public class BTreeNode {
         return nodeIndexPair;
     }
 
+    /**
+     * Finds the predecessor of the key at the specified index
+     * @param i The index
+     */
     public NodeIndexPair findPredecessor(int i) {
         NodeIndexPair nodeIndexPair;
         if (leaf) {
@@ -89,6 +124,9 @@ public class BTreeNode {
         return nodeIndexPair;
     }
 
+    /**
+     * Finds the minimum key in the subtree rooted at this node
+     */
     public NodeIndexPair findMinimum() {
         NodeIndexPair nodeIndexPair;
         if (isEmpty()) {
@@ -106,6 +144,9 @@ public class BTreeNode {
         return nodeIndexPair;
     }
 
+    /**
+     * Finds the maximum key in the subtree rooted at this node
+     */
     public NodeIndexPair findMaximum() {
         NodeIndexPair nodeIndexPair;
         if (isEmpty()) {
@@ -125,7 +166,17 @@ public class BTreeNode {
 
     @Override
     public String toString() {
-        return isEmpty() ? "" : toString(0);
+        String s;
+        if (isEmpty()) {
+            s = "";
+        }
+        else {
+            StringBuilder sb = new StringBuilder();
+            appendString(sb, 0);
+            s = sb.toString();
+        }
+
+        return s;
     }
 
     /**
@@ -155,6 +206,10 @@ public class BTreeNode {
         return newRoot;
     }
 
+    /**
+     * Splits the child at the specified index to 2 nodes
+     * @param i The index of the child
+     */
     void splitChild(int i) {
         BTreeNode child = children.get(i);
         BTreeNode splitChild = child.createNewSplitNode();
@@ -179,30 +234,58 @@ public class BTreeNode {
         child.n = child.minKeys();
     }
 
+    /**
+     * Inserts a password to the subtree rooted at this node
+     * (knowing this node is not full)
+     * @param password The password to insert
+     */
     void insertNonFull(String password) {
-        int i;
         if (leaf) {
-            // look for the right place for the new key and make room for it
-            // while we go
-            i = rightShiftKeysBiggerThan(password);
-            keys.set(i + 1, password);
-            n++;
-            keys.setSize(n);
+            insertItemToLeaf(password);
         } // if
         else {
-            // find the child which the key should go into
-            i = localSearch(password).index();
-
-            // we need to split the child it is full
-            if (children.get(i).isFull()) {
-                splitChild(i);
-                if (compareWithKeyAt(password, i) > 0) {
-                    i++;
-                }
-            }
-
-            children.get(i).insertNonFull(password);
+            insertItemToSubtree(password);
         }
+    }
+
+    /**
+     * Inserts a password to the subtree rooted at this node
+     * @param password The password to insert
+     */
+    private void insertItemToSubtree(String password) {
+        int i = localSearch(password).index();
+        insertItemToChild(password, i);
+
+    }
+
+    /**
+     * Inserts a password to the subtree rooted at the child at the specified index
+     * @param password The password to insert
+     * @param i The child index
+     */
+    private void insertItemToChild(String password, int i) {
+        // we need to split the child it is full
+        if (children.get(i).isFull()) {
+            splitChild(i);
+            if (compareWithKeyAt(password, i) > 0) {
+                i++;
+            }
+        }
+
+        children.get(i).insertNonFull(password);
+    }
+
+    /**
+     * Inserts a password to this node (knowing it's a leaf)
+     * @param password The password to insert
+     */
+    private void insertItemToLeaf(String password) {
+        int i;// look for the right place for the new key and make room for it
+        // while we go
+        i = rightShiftKeysBiggerThan(password);
+        keys.set(i + 1, password);
+        n++;
+        keys.setSize(n);
     }
 
     /**
@@ -246,6 +329,11 @@ public class BTreeNode {
         children.takeItemsFrom(from.children, startIndex);
     }
 
+    /**
+     * Deletes the password from the subtree rooted at this node
+     * (if it is found in it)
+     * @param password The password to delete
+     */
     void deleteNotMinimumKeys(String password) {
         FoundIndexPair searchResult = localSearch(password);
         int i = searchResult.index();
@@ -259,6 +347,11 @@ public class BTreeNode {
         }
     }
 
+    /**
+     * Deletes the password from this node
+     * @param password The password to delete
+     * @param i The index of the password in the keys array
+     */
     private void deleteNotMinimumKeysInThis(String password, int i) {
         BTreeNode leftChild = children.get(i);
         BTreeNode rightChild = children.get(i + 1);
@@ -282,6 +375,12 @@ public class BTreeNode {
         }
     }
 
+    /**
+     * Deletes the password from the subtree rooted at the child at the specified index
+     * (if it is found in it)
+     * @param password The password to delete
+     * @param i The child index
+     */
     private void deleteNotMinimumKeysInChild(String password, int i) {
         BTreeNode child = children.get(i);
         if (child.needsKey()) {
@@ -306,11 +405,20 @@ public class BTreeNode {
         child.deleteNotMinimumKeys(password);
     }
 
+    /**
+     * Deletes the keys from this node (knowing it's a leaf)
+     * @param i The index of the key to remove
+     */
     private void deleteFromLeaf(int i) {
         keys.removeAt(i);
         n--;
     }
 
+    /**
+     * Replaces the key at the specified index with it's predecessor and
+     * then recursively delete the predecessor from the subtree
+     * @param i The index of the key
+     */
     private void replaceWithPredecessorAndDeleteItRecursively(int i) {
         NodeIndexPair nodeIndexPair = findPredecessor(i);
         String predecessor = nodeIndexPair.node().keys.get(nodeIndexPair.index());
@@ -318,6 +426,11 @@ public class BTreeNode {
         keys.set(i, predecessor);
     }
 
+    /**
+     * Replaces the key at the specified index with it's successor and
+     * then recursively delete the successor from the subtree
+     * @param i The index of the key
+     */
     private void replaceWithSuccessorAndDeleteItRecursively(int i) {
         NodeIndexPair nodeIndexPair = findSuccessor(i);
         String successor = nodeIndexPair.node().keys.get(nodeIndexPair.index());
@@ -325,6 +438,11 @@ public class BTreeNode {
         keys.set(i, successor);
     }
 
+    /**
+     * Merges the child at the specified index with it's right sibling
+     * @param i The child index
+     * @return The merged node
+     */
     BTreeNode merge(int i) {
         BTreeNode leftChild = children.get(i);
 
@@ -349,6 +467,10 @@ public class BTreeNode {
         return leftChild;
     }
 
+    /**
+     * Perform a right shift of keys and a child with the left sibling of the child at specified index
+     * @param i The child index
+     */
     private void shiftRight(int i) {
         BTreeNode child = children.get(i);
         BTreeNode leftSibling = children.get(i - 1);
@@ -371,6 +493,10 @@ public class BTreeNode {
         leftSibling.n--;
     }
 
+    /**
+     * Perform a left shift of keys and a child with the right sibling of the child at specified index
+     * @param i The child index
+     */
     private void shiftLeft(int i) {
         BTreeNode child = children.get(i);
         BTreeNode rightSibling = children.get(i + 1);
@@ -393,50 +519,62 @@ public class BTreeNode {
         rightSibling.n--;
     }
 
+    /**
+     * Compare the given key with the key at specified index
+     * @param password The key
+     * @param i The index of the key in this node
+     * @return
+     */
     private int compareWithKeyAt(String password, int i) {
         return compare(password, keys.get(i));
     }
 
-    // if password1 > password2 we return positive number
-    // if password1 = password2 we return 0
-    // if password1 < password2 we return negative number
+    /**
+     * Compares two keys
+     *
+     * if password1 > password2 we return positive number
+     * if password1 = password2 we return 0
+     * if password1 < password2 we return negative number
+     *
+     * @param password1 The first key
+     * @param password2 The second key
+     */
     private int compare(String password1 , String password2) {
         return password1.compareTo(password2);
     }
 
-    private String toString(int depth) {
-        String s = "";
-
+    /**
+     * Appends the string representation of the subtree rooted at this node
+     * to the specified string builder starting at the specified depth
+     * @param sb The string builder to append to
+     * @param depth The depth of this node
+     */
+    private void appendString(StringBuilder sb, int depth) {
         if (leaf) {
-            s += keyString(0, depth);
+            appendKeyString(sb, 0, depth);
             for (int i = 1; i < size(); i++) {
-                s += "," + keyString(i, depth);
+                sb.append(",");
+                appendKeyString(sb, i, depth);
             } // for
         }
         else {
-            s += childAndKeyString(0, depth);
-            for (int i = 1; i < size(); i++) {
-                s += "," + childAndKeyString(i, depth);
+            for (int i = 0; i < size(); i++) {
+                appendChildString(sb, i, depth);
+                sb.append(",");
+                appendKeyString(sb, i, depth);
+                sb.append(",");
             } // for
-            s += "," + childString(size(), depth);
+            appendChildString(sb, size(), depth);
         }
-
-        return s;
     }
 
-    private String keyString(int i, int depth) {
-        return keys.get(i) + "_"  + depth;
+    private void appendKeyString(StringBuilder sb, int i, int depth) {
+        sb.append(keys.get(i))
+          .append("_")
+          .append(depth);
     }
 
-    private String childString(int i, int depth) {
-        return children.get(i).toString(depth + 1);
-    }
-
-    private String childAndKeyString(int i, int depth) {
-        String s = "";
-        s += childString(i, depth);
-        s += ",";
-        s += keyString(i, depth);
-        return s;
+    private void appendChildString(StringBuilder sb, int i, int depth) {
+        children.get(i).appendString(sb, depth + 1);
     }
 }

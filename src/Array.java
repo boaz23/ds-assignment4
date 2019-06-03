@@ -1,5 +1,16 @@
+/**
+ * A fixed sized array (does not increase capacity) which supports extra operations
+ * such as insertion of an item in the middle of the array
+ * @param <T> The item type
+ */
 public class Array<T> {
     private T[] items;
+
+    /**
+     * The amount of items the array takes care of starting at the first item (index 0).
+     * Only items at indices 0,...,size-1 are taken care of in various operations
+     * such as insert, delete, right shift and left shift.
+     */
     private int size;
 
     public Array(T[] items) {
@@ -15,6 +26,10 @@ public class Array<T> {
         return size;
     }
 
+    /**
+     * Sets the amount of items to care about.
+     * @param size The new size
+     */
     public void setSize(int size) {
         if (size < 0) {
             throw new RuntimeException("size must be a non-negative number.");
@@ -23,14 +38,27 @@ public class Array<T> {
         this.size = size;
     }
 
+    /**
+     * Returns the capacity of the array.
+     * The array cannot hold more than this amount of items
+     */
     public int capacity() {
         return items.length;
     }
 
+    /**
+     * Returns the item at the
+     * @param index The index
+     */
     public T get(int index) {
         return items[index];
     }
 
+    /**
+     * Sets the item at given index to specified value
+     * @param index The item index
+     * @param item The new value
+     */
     public void set(int index, T item) {
         items[index] = item;
     }
@@ -111,50 +139,94 @@ public class Array<T> {
         return item;
     }
 
+    /**
+     * @return The first index in the array
+     */
     public int firstIndex() {
         return 0;
     }
 
+    /**
+     * @return The last index in the array that has an item
+     */
     public int lastIndex() {
         return size() - 1;
     }
 
+    /**
+     * Returns whether the index has an index on it's right that is taken care of by the array
+     * @param i The index
+     */
     public boolean hasRight(int i) {
         return i < lastIndex();
     }
 
+    /**
+     * Returns whether the index has an index on it's left that is taken care of by the array
+     * @param i The index
+     */
     public boolean hasLeft(int i) {
         return i > firstIndex();
     }
 
+    /**
+     * Gets the first item in the array
+     */
     public T getFirst() {
         return get(firstIndex());
     }
 
+    /**
+     * Gets the last item in the array
+     */
     public T getLast() {
         return get(lastIndex());
     }
 
+    /**
+     * Sets the first item of the array
+     * @param item The new value
+     */
     public void setFirst(T item) {
         set(firstIndex(), item);
     }
 
+    /**
+     * Sets the last item of the array
+     * @param item The new value
+     */
     public void setLast(T item) {
         set(lastIndex(), item);
     }
 
+    /**
+     * Inserts a new item to array as the first item
+     * @param item The item to insert
+     */
     public void insertFirst(T item) {
         insertAt(firstIndex(), item);
     }
 
+    /**
+     * Inserts a new item to array as the last item
+     * @param item The item to insert
+     */
     public void insertLast(T item) {
         insertAt(size(), item);
     }
 
+    /**
+     * Removes the first item in the array
+     * @return The value of removed item
+     */
     public T removeFirst() {
         return removeAt(firstIndex());
     }
 
+    /**
+     * Removes the last item in the array
+     * @return The value of removed item
+     */
     public T removeLast() {
         return removeAt(lastIndex());
     }

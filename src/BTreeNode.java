@@ -20,6 +20,13 @@ public class BTreeNode {
     }
 
     /**
+     * Returns whether this node is a leaf
+     */
+    public boolean isLeaf() {
+        return leaf;
+    }
+
+    /**
      * Returns the minimum amount of keys this node can hold
      */
     private int minKeys() {
@@ -73,7 +80,7 @@ public class BTreeNode {
             return new NodeIndexPair(this, searchResult.index());
         }
         // we haven't found, nowhere else to look for the key
-        else if (leaf) {
+        else if (isLeaf()) {
             return null;
         }
         // we haven't found, look for the key in the child
@@ -88,7 +95,7 @@ public class BTreeNode {
      */
     public NodeIndexPair findSuccessor(int i) {
         NodeIndexPair nodeIndexPair;
-        if (leaf) {
+        if (isLeaf()) {
             if (keys.hasRight(i)) {
                 nodeIndexPair = new NodeIndexPair(this, i + 1);
             }
@@ -109,7 +116,7 @@ public class BTreeNode {
      */
     public NodeIndexPair findPredecessor(int i) {
         NodeIndexPair nodeIndexPair;
-        if (leaf) {
+        if (isLeaf()) {
             if (keys.hasLeft(i)) {
                 nodeIndexPair = new NodeIndexPair(this, i - 1);
             }
@@ -134,7 +141,7 @@ public class BTreeNode {
         }
         else {
             BTreeNode node = this;
-            while (!node.leaf) {
+            while (!node.isLeaf()) {
                 node = node.children.getFirst();
             }
 
@@ -154,7 +161,7 @@ public class BTreeNode {
         }
         else {
             BTreeNode node = this;
-            while (!node.leaf) {
+            while (!node.isLeaf()) {
                 node = node.children.getLast();
             }
 
@@ -217,7 +224,7 @@ public class BTreeNode {
         // take the keys t+1,...,2t-1 from the child we're splitting
         // and put them as the keys 1,...,t respectively in the new node.
         splitChild.takeKeysFrom(child, t);
-        if (!child.leaf) {
+        if (!child.isLeaf()) {
             // take the children t+1,...,2t from the child we're splitting
             // and put them as the children 1,...,t respectively in the new node.
             splitChild.takeChildrenFrom(child, t);
@@ -240,7 +247,7 @@ public class BTreeNode {
      * @param password The password to insert
      */
     void insertNonFull(String password) {
-        if (leaf) {
+        if (isLeaf()) {
             insertItemToLeaf(password);
         } // if
         else {
@@ -304,7 +311,7 @@ public class BTreeNode {
 
     private BTreeNode createNewSplitNode() {
         BTreeNode splitNode = new BTreeNode(t);
-        splitNode.leaf = leaf;
+        splitNode.leaf = isLeaf();
         splitNode.n = splitNode.minKeys();
         return splitNode;
     }
@@ -342,7 +349,7 @@ public class BTreeNode {
         }
         // password < keys[i] | i == n
         // if it's a leaf, then the key is not in the tree, so nothing to do
-        else if (!leaf) {
+        else if (!isLeaf()) {
             deleteNotMinimumKeysInChild(password, i);
         }
     }
@@ -357,7 +364,7 @@ public class BTreeNode {
         BTreeNode rightChild = children.get(i + 1);
 
         // case 1
-        if (leaf) {
+        if (isLeaf()) {
             deleteFromLeaf(i);
         }
         // case 2
@@ -456,7 +463,7 @@ public class BTreeNode {
         // take the keys 1,...,t-1 from the right child
         // and put them as the keys t+1,...,2t-1 respectively in the left child.
         leftChild.takeKeysFrom(rightChild, 0);
-        if (!leftChild.leaf) {
+        if (!leftChild.isLeaf()) {
             // take the children 1,...,t from the right child
             // and put them as the children t+1,...,2t respectively in the left child.
             leftChild.takeChildrenFrom(rightChild, 0);
@@ -482,7 +489,7 @@ public class BTreeNode {
         // take the last key of the left sibling and replace the key
         // we took earlier from this node
         keys.set(i - 1, leftSibling.keys.removeLast());
-        if (!child.leaf) {
+        if (!child.isLeaf()) {
             // take the last child of the left sibling and insert it
             // to the child as the first child
             BTreeNode transferredChild = leftSibling.children.removeLast();
@@ -508,7 +515,7 @@ public class BTreeNode {
         // take the first key of the right sibling and replace the key
         // we took earlier from this node
         keys.set(i, rightSibling.keys.removeAt(0));
-        if (!child.leaf) {
+        if (!child.isLeaf()) {
             // take the first child of the right sibling and insert it
             // to the child as the last child
             BTreeNode transferredChild = rightSibling.children.removeAt(0);
@@ -550,22 +557,31 @@ public class BTreeNode {
      * @param depth The depth of this node
      */
     private void appendString(StringBuilder sb, int depth) {
-        if (leaf) {
-            appendKeyString(sb, 0, depth);
-            for (int i = 1; i < size(); i++) {
-                sb.append(",");
-                appendKeyString(sb, i, depth);
-            } // for
+        if (isLeaf()) {
+            appendLeafString(sb, depth);
         }
         else {
-            for (int i = 0; i < size(); i++) {
-                appendChildString(sb, i, depth);
-                sb.append(",");
-                appendKeyString(sb, i, depth);
-                sb.append(",");
-            } // for
-            appendChildString(sb, size(), depth);
+            appendInnerNodeString(sb, depth);
         }
+    }
+
+    private void appendLeafString(StringBuilder sb, int depth) {
+        int lastKeyIndex = keys.lastIndex();
+        for (int i = 0; i < lastKeyIndex; i++) {
+            appendKeyString(sb, i, depth);
+            sb.append(",");
+        } // for
+        appendKeyString(sb, lastKeyIndex, depth);
+    }
+
+    private void appendInnerNodeString(StringBuilder sb, int depth) {
+        for (int i = 0; i < size(); i++) {
+            appendChildString(sb, i, depth);
+            sb.append(",");
+            appendKeyString(sb, i, depth);
+            sb.append(",");
+        } // for
+        appendChildString(sb, size(), depth);
     }
 
     private void appendKeyString(StringBuilder sb, int i, int depth) {

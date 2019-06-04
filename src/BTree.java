@@ -48,7 +48,8 @@ public class BTree {
      * @param password The key to delete
      */
     private void rootDelete(String password) {
-        if (root.needsKey() & root.children.get(0).needsKey() & root.children.get(1).needsKey()) {
+        if ((root.needsKey() & !root.isLeaf()) &&
+            (root.children.get(0).needsKey() & root.children.get(1).needsKey())) {
             BTreeNode newRoot = root.merge(0);
             newRoot.root = root.root;
             root = newRoot;
